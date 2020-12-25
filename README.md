@@ -1,3 +1,10 @@
+# System Requirement
+1. Fedora 33 Workstation สำหรับทำงาน Ram 16GB, 4 Core - 8 Thread : Yoga C930 
+2. Multipass Ubuntu Virtualization ใช้ในการสร้าง VM ผ่าน Command Line
+3. QEMU และ LibVirt สำหรับให้ Multipass มาสั่ง Provisioning VM ใน Fedora Workstation
+4. VM ทั้งสามเครื่อง Spec คือ Ram 4GB, Disk 12 GB, CPU 2 Virtual-Core 
+
+
 openssl genrsa -out rke.pem 2048
 openssl rsa -in rke.pem -pubout -out rke.crt
 
