@@ -9,9 +9,10 @@
 เมื่อสร้าง VM แล้วให้เราติดตั้ง package ที่จำเป้นในการใช้งานซึ่งก็คือ Docker และทำการเปิด Service ให้ใช้งานได้ 
 แต่ปัจจุบันบางรั้งจะมีปัญหา IP ไม่แจกมาจาก DHCP Bridge นั่นเป็นเพราะ Firewalld ทำการ Block ไว้
 ให้เราใช้คำสั่ง ip addr เพื่อดู ชื่อของ DHCP Bridge ว่ามี interface network ชื่อว่าอะไรและทำการอนุญาตด้วย
+ซึ่งความน่าจะเป็นที่เกิดขึ้นคือ Multipass จะใช้ QEMU เป็น default driver ในการสร้าง VM แล้วโดน block
 ```
-ip addr 
-firewall-cmd --add--interface=xxxx --zone=trusted
+ip addr # ดู interface
+firewall-cmd --add--interface=[ชื่อinterface]] --zone=trusted
 
 [linxianer12@fedora Certified-Rancher-Operator]$ firewall-cmd --get-active-zones
 FedoraWorkstation
@@ -23,6 +24,7 @@ trusted
 
 ```
 
+# Create Virtual Machine ด้วย Multipass
 ```
 multipass launch ubuntu -n rancher-host -m 4G -d 12G -c 2   --cloud-init vm-template.yaml
 
