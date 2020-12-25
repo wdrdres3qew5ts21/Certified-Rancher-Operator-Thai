@@ -5,21 +5,25 @@
 4. VM ทั้งสามเครื่อง Spec คือ Ram 4GB, Disk 12 GB, CPU 2 Virtual-Core 
 
 
-openssl genrsa -out rke.pem 2048
-openssl rsa -in rke.pem -pubout -out rke.crt
-
-
-```
-Name                    State             IPv4             Image
-kube-master             Running           192.168.122.27   Ubuntu 20.04 LTS
-kube-worker             Running           192.168.122.242  Ubuntu 20.04 LTS
-rancher-host            Running           192.168.122.216  Ubuntu 20.04 LTS
-```
-ssh-keygen
-copy public key ไฟล์ไปวางที่ .ssh/authorized_keys 
-
 ใช้  multipass อนุญาต firewalld ด้วย
+เมื่อสร้าง VM แล้วให้เราติดตั้ง package ที่จำเป้นในการใช้งานซึ่งก็คือ Docker และทำการเปิด Service ให้ใช้งานได้ 
+แต่ปัจจุบันบางรั้งจะมีปัญหา IP ไม่แจกมาจาก DHCP Bridge นั่นเป็นเพราะ Firewalld ทำการ Block ไว้
+ให้เราใช้คำสั่ง ip addr เพื่อดู ชื่อของ DHCP Bridge ว่ามี interface network ชื่อว่าอะไรและทำการอนุญาตด้วย
+```
+ip addr 
+firewall-cmd --add--interface=xxxx --zone=trusted
 
+[linxianer12@fedora Certified-Rancher-Operator]$ firewall-cmd --get-active-zones
+FedoraWorkstation
+  interfaces: wlp107s0
+libvirt
+  interfaces: virbr0
+trusted
+  interfaces: lxdbr0 mpqemubr0
+
+```
+
+```
 multipass launch ubuntu -n rancher-host -m 4G -d 12G -c 2   --cloud-init vm-template.yaml
 
 multipass launch ubuntu -n kube-master -m 4G -d 12G -c 2    --cloud-init vm-template.yaml
@@ -27,8 +31,22 @@ multipass launch ubuntu -n kube-master -m 4G -d 12G -c 2    --cloud-init vm-temp
 multipass launch ubuntu -n kube-worker -m 4G -d 12G -c 2    --cloud-init vm-template.yaml
 
 sudo apt-get update -y && sudo apt-get install docker.io -y && sudo systemctl start docker && sudo systemctl enable docker &&sudo usermod -aG docker $USER
+```
 
-echo ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDIJHv5t6vgeEMVHW0JoPvJ3oV7v3mRh+1kctpU7AcReNOaAJ+D9PkcOtHo+jFfMHu2+1kAWbgfrb22d9yDVWnZfn397coyPKaCHJwQMwFg27rV8xSXf0qlRuJcgcoi4M7djpuF2JqsXJ3VHuj7C4/WKUJO5tmD4AZ2ny1BhsdTJKEBmCLFza39NmtrVUuvpg11/ycazkkQwjsXr8v/QNFbsrT/oFG9VY2N+Y81PBG5m1wPFrQw60TyxrBJEeXehgdI/zQJv50cRSO9ItczQLzYKvq5fVXthhIZ2QbANtGZT+rCDTEq+jXa9SUznXYLinmXojbJsPW7S/p6eo4GsknF6SlmDdwiXzrC8uq2ycaxEndr5Scs74uTsrCIzDbMi+Ha5WqHXkJptjf0KnaboTdRFz7xu19TUo57KHjccbjNsf2081BMz9o7g3r/bU6y6RF0ELLt/EfH8mKKTpN5JK1jM7W/J0bBI9PgbLgcw8BsWqcpf8XiF1vR1mE5Uj4ITG8= linxianer12@fedora >> ~/.ssh/authorized_keys
+
+### Generate Certificate สำหรับ Self Signed
+```
+openssl genrsa -out rke.pem 2048
+openssl rsa -in rke.pem -pubout -out rke.crt
+
+Name                    State             IPv4             Image
+kube-master             Running           192.168.122.27   Ubuntu 20.04 LTS
+kube-worker             Running           192.168.122.242  Ubuntu 20.04 LTS
+rancher-host            Running           192.168.122.216  Ubuntu 20.04 LTS
+```
+
+ssh-keygen
+copy public key ไฟล์ไปวางที่ .ssh/authorized_keys 
 
 
 # Prerequisite
