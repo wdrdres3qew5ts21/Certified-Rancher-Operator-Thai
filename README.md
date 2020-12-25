@@ -113,7 +113,7 @@ metadata:
 # Debug Nginx Proxy
 Nginx Proxy มีไว้สำหรับทำให้ Pod ที่ไมไ่ด้รันอยู๋ใน Control Plane Node สามารถติดต่อไปหา Control Plane ที่มี API-Server ได้เพราะว่า Nginx Proxy มาทำ Upstreeam จำลองเอาไว้ ต้องไปดูใน Docker Container ของแต่ล่ะ Node นั้น ซึ่งตัว Container Nginx Proxy นั้นจะใช้ Network แบบ host ทำให้สามารถเรียกใช้ผ่าน localhost ได้ที่ port 6443 ของแต่ล่ะ Worker Node เมื่อยิงไปที่ local ตัวเองแต่การ proxy ก็จะส่งไปให้เครื่อง Control Plane ได้นั่นเอง !!!
 ### /etc/nginx/nginx.conf
-````
+```
 stream {                                
         upstream kube_apiserver {       
                                         
@@ -169,6 +169,7 @@ tcp        0      0 0.0.0.0:80              0.0.0.0:*               LISTEN      
 
 ```
 # Debug Control Plane Component แบบไที่ไม่ใช้ Systemd เป้น Service แต่ใช Container แทน
+
 ```
 ubuntu@kube-worker:~$ docker network ls                                                                                                                                                       
 NETWORK ID          NAME                DRIVER              SCOPE                                                                                                                             
