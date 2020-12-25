@@ -238,4 +238,68 @@ ubuntu@kube-worker:~$ docker network inspect 23b
     }                                                                                                                                                          
 ]   
 
-```# Rancher-Certified-Operator
+```
+# Node Role 
+ดูได้จาก label ที่แปะไว้ว่าเป็น node ประเภทไหน
+1. node-role.kubernetes.io/worker: "true"
+2. node-role.kubernetes.io/controlplane: "true"
+3. node-role.kubernetes.io/etcd: "true"
+### Worker node
+```
+apiVersion: v1
+kind: Node
+metadata:
+  annotations:
+    node.alpha.kubernetes.io/ttl: "0"
+    projectcalico.org/IPv4Address: 192.168.122.242/24
+    projectcalico.org/IPv4IPIPTunnelAddr: 10.42.73.128
+    rke.cattle.io/external-ip: 192.168.122.242
+    rke.cattle.io/internal-ip: 192.168.122.242
+    volumes.kubernetes.io/controller-managed-attach-detach: "true"
+  creationTimestamp: "2020-12-25T06:50:10Z"
+  labels:
+    beta.kubernetes.io/arch: amd64
+    beta.kubernetes.io/os: linux
+    kubernetes.io/arch: amd64
+    kubernetes.io/hostname: kube-worker
+    kubernetes.io/os: linux
+    node-role.kubernetes.io/worker: "true"
+  name: kube-worker
+  resourceVersion: "47985"
+  selfLink: /api/v1/nodes/kube-worker
+  uid: 68751cc1-6d05-48d6-9a62-a7eb2140a0e1
+spec:
+  podCIDR: 10.42.2.0/24
+  podCIDRs:
+  - 10.42.2.0/24
+```
+### Control Plane, ETCD Node
+```
+apiVersion: v1
+kind: Node
+metadata:
+  annotations:
+    node.alpha.kubernetes.io/ttl: "0"
+    projectcalico.org/IPv4Address: 192.168.122.27/24
+    projectcalico.org/IPv4IPIPTunnelAddr: 10.42.221.192
+    rke.cattle.io/external-ip: 192.168.122.27
+    rke.cattle.io/internal-ip: 192.168.122.27
+    volumes.kubernetes.io/controller-managed-attach-detach: "true"
+  creationTimestamp: "2020-12-25T06:50:08Z"
+  labels:
+    beta.kubernetes.io/arch: amd64
+    beta.kubernetes.io/os: linux
+    kubernetes.io/arch: amd64
+    kubernetes.io/hostname: kube-master
+    kubernetes.io/os: linux
+    node-role.kubernetes.io/controlplane: "true"
+    node-role.kubernetes.io/etcd: "true"
+  name: kube-master
+  resourceVersion: "49813"
+  selfLink: /api/v1/nodes/kube-master
+  uid: 8710f2a4-79ff-4b14-9c23-b6caee1c0e06
+```
+
+# Project ประกอบไปด้วยหลายๆ Namespace
+1. เราไม่สามารถ move namespace ไปยัง Proejct ที่ถูก set Quota ได้
+2. Notifier Set ที่ระดับ Cluster ว่าจะแจ้งเตือนไปหาใคร 
