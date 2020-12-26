@@ -28,6 +28,7 @@
 
 
 # Architecture Virtual Machine
+![alt text](images/libvirt-driver-arch.png "LibVirt Architecture")
 ```
 [  User Space    ]  [    Kernel Space   ]
 LibVirt => QEMU =>  KVM => Virtual Machine
@@ -36,18 +37,95 @@ LibVirt => QEMU =>  KVM => Virtual Machine
 สำหรับ Infrastructure Platform นั้นเราจะใช้ libvirt ซึ่งเป็น High Level API ที่ใช้ในการควบคุม QEMU หลายๆตัวซึ่งถ้าตัวซึ่ง QEMU นั้นจะเสมือนกับ Hypervisor Driver ที่ใช้ติดต่อกับ Virtual Machine จริงๆวึ่งถ้าเราลองมาดูตัวอย่าง Hypervisor Drivers ที่รองรับเช่น LXC, QEMU (อยู่ใน Linux), VirtualBox (หลายๆค้นน่าจะคุ้นเคยกับตัวนี้กันที่มักจะใช้ Hashicorp Vagrant Provisioning เครื่อง VM), VMWare ESX, Microsoft Hyper-V และก็ XEN
 ถ้ายกตัวอย่างแบบนี้แล้วเพื่อนๆอาจจะเห็นภาพมากขึ้นว่าทำไมถึงต้องมี LibVirt มีใช้เป็น High Level API นั่นก็เพราะช่วยให้เราสามารถจัดการ VM ได้ผ่าน API เดียวนั่นเอง
 
+
 ### QEMU Virtual Machine Emulator
 จะทำหน้าที่เสมือน Software จำลองเรื่องของการอุปกรณ์ต่อพ่วงต่างๆเช่น Disk, Network, PCI และเรื่อง Input ของมูลเข้าไปยัง Virtual Machine ที่อยู่ข้างในจริงๆ ให้ลองนึกถึงที่ถ้าเราใช้ Hyper-V ในการสร้าง Window 10 ข้างในคอมของเราอีกทีเราก็จะพบว่า Hyper-V มี Remote GUI ให้เราสามารถกดคลิกแล้วคำสั่งคลิกเหล่านั้นก็ถูกส่งเข้าไปในเครื่อง Virtual Machine เหล่านั้นอีกทีหน้าที่เหล่านี้สำหรับการทำ Input คำสั่งคือจัดการ Process ก็คือจัดการโดย QEMU นั่นเอง ซึ่งการติดต่อระหว่าง  KVM(Kernel Virtual Machine) เพื่อทำการสร้าง Virtual Machine จริงๆซึ่งจะไปรันในส่วนของ Kernel Space ใน Linux (หลักการเมืองกับการใช้ CGroup ใน Container เพื่อแยก Namespace แต่ล่ะแอพออกจากกัน)
-โดยปกติแล้วถ้าเราอยากจะสร้าง Virtual Machine เราก็สามารถใช้ VMM(Virtual Machine Manager) แต่อย่างนั้นเองเราก็จะพบว่าขั้นตอนการติดตั้งนั้นช้ามากเพราะเราต้องทำการ Load ISO image ของ Virtual Machine เข้าไปก่อนแล้วค่อยๆ Setup ทีล่ะจุดๆซึ่งก็จะทำให้การ Development เพื่ออยากสร้าง Virtual Machine ของเรานั้นช้าลงมากไม่เหมือนกับการพัฒนาโปรแกรมแล้วก็ Pack โปรแกรมลงไป Container สามารถทำงานได้ทันที ซึ่งเราจะแก้ปัญหานี้ด้วยการใช้ Multipass ซึ่งเป็น software package บน Snapstore ที่ใช้ในการสร้าง Virtual Machine ได้อย่างง่ายดายเหมือนกับบน LXC Container แต่สาเหตุที่ผมไม่ใช้ LXC Container เพราะว่าทดลองหลายครั้งแล้วไม่สามารถติดตั้ง Dependency ที่จำเป็นจริงๆของ Rancher ให้ใช้งานได้ ซึ่งสาเหตุนี้อาจจะเกิดจากการที่ LXC Container นั้นยังใช้การ Share Kernel กันอยู่ทำให้มีปัญหาในการติดตั้ง Rancher ลงไปใน LXC Container อีกทีนึง ดังนั้นแล้วผมจึงตัดสินใจใช้ Multipass ในการสร้าง Virtual Machine แบบรวดเร็วและง่ายเหมือนกับ LXC Container แต่ว่ามีการแยก Kernel ของเครื่องที่ทำงานจริงๆ (เทสแล้วไม่มีปัญหาให้ปวดหัวเหมือนตอนทำใน LXC Container) ซึ่งจริงๆ Fedora 33 สามารถรัน Kubernetes ใน LXC Container ได้ด้วยการ Skip Verification Flag ของ Kubeadm ตอนติดตั้งแต่หลังจากที่ทดลองบน Rancher แล้วคำสั่ง Skip ก็เลยใช้ Virtual Machine แทนไปเลย แล้วก็แยกออกจากกันจริงๆด้วยนั่นเองครับ
-
-
 
 # Multipass Instant Ubuntu VMs
-// ภาพ
-นั้นถ้าหากเราใช้ Fedora 33 จะมาพร้อมกับ library libvirt ในตัวอยู่แล้วแต่ถ้าหากใครใช้ Linux ประเภทอื่นก็สามารถติดตั้งได้ตาม Distribution ที่ตัวเองใช้งาน
-```
+![alt text](images/mutipass.png)
+โดยปกติแล้วถ้าเราอยากจะสร้าง Virtual Machine เราก็สามารถใช้ VMM(Virtual Machine Manager) แต่อย่างนั้นเองเราก็จะพบว่าขั้นตอนการติดตั้งนั้นช้ามากเพราะเราต้องทำการ Load ISO image ของ Virtual Machine เข้าไปก่อนแล้วค่อยๆ Setup ทีล่ะจุดๆซึ่งก็จะทำให้การ Development เพื่ออยากสร้าง Virtual Machine ของเรานั้นช้าลงมากไม่เหมือนกับการพัฒนาโปรแกรมแล้วก็ Pack โปรแกรมลงไป Container สามารถทำงานได้ทันที ซึ่งเราจะแก้ปัญหานี้ด้วยการใช้ Multipass ซึ่งเป็น software package บน Snapstore ที่ใช้ในการสร้าง Virtual Machine ได้อย่างง่ายดายเหมือนกับบน LXC Container แต่สาเหตุที่ผมไม่ใช้ LXC Container เพราะว่าทดลองหลายครั้งแล้วไม่สามารถติดตั้ง Dependency ที่จำเป็นจริงๆของ Rancher ให้ใช้งานได้ ซึ่งสาเหตุนี้อาจจะเกิดจากการที่ LXC Container นั้นยังใช้การ Share Kernel กันอยู่ทำให้มีปัญหาในการติดตั้ง Rancher ลงไปใน LXC Container อีกทีนึง ดังนั้นแล้วผมจึงตัดสินใจใช้ Multipass ในการสร้าง Virtual Machine แบบรวดเร็วและง่ายเหมือนกับ LXC Container แต่ว่ามีการแยก Kernel ของเครื่องที่ทำงานจริงๆ (เทสแล้วไม่มีปัญหาให้ปวดหัวเหมือนตอนทำใน LXC Container) ซึ่งจริงๆ Fedora 33 สามารถรัน Kubernetes ใน LXC Container ได้ด้วยการ Skip Verification Flag ของ Kubeadm ตอนติดตั้งแต่หลังจากที่ทดลองบน Rancher แล้วคำสั่ง Skip ก็เลยใช้ Virtual Machine แทนไปเลย แล้วก็แยกออกจากกันจริงๆด้วยนั่นเองครับ
+
+# ติดตั้ง Multipass
 
 ```
+sudo snap install multipass # เพื่อติดตั้ง package จาก snapstore
+
+ip addr # เพื่อลองดู Network Interface ที่เป็น bridge ของ QEMU
+
+                        [ชื่อinterface QEMU]
+firewall-cmd --add--interface= --zone=trusted  #เพิ่ม Interface QEMU ให้อยู่ใน trusted zone ของ firewalld
+
+```
+### ผลลัพธ์ของ Network Interface 
+จะพบว่า Default Driver ของ Multipass นั้นใช้ผ่าน QEMU ตรงๆก็จะเห็น Interface ของ QEMU ซึ่งปัญหาต่อไปที่หลายๆคนอาจจะเจอนั่นก้คือการที่ Bridge QEMU ไม่สามารถใช้ DHCP แจก IP ได้นั่นก็เป็นเพราะว่าโดน Firewalld block interface เอาไว้อยู่ซึ่งเราจะแก้ปัญหานี้ด้วยการอนุญาต Interface Bridge ของ QEMU อยู่ใน trusted zone
+```
+12: mpqemubr0-dummy: <BROADCAST,NOARP> mtu 1500 qdisc noop master mpqemubr0 state DOWN group default qlen 1000
+    link/ether 52:54:00:72:7e:2a brd ff:ff:ff:ff:ff:ff
+13: mpqemubr0: <NO-CARRIER,BROADCAST,MULTICAST,UP> mtu 1500 qdisc noqueue state DOWN group default qlen 1000
+    link/ether 06:b9:5e:0a:9f:42 brd ff:ff:ff:ff:ff:ff
+    inet 10.249.36.1/24 brd 10.249.36.255 scope global mpqemubr0
+       valid_lft forever preferred_lft forever
+    inet6 fe80::4b9:5eff:fe0a:9f42/64 scope link 
+       valid_lft forever preferred_lft forever
+
+```
+สลับมาใช้ LibVirt บน Multipass แทน QEMU
+```
+multipass set local.driver=libvirt
+
+multipass get local.driver # เช็ค driver Multipass
+``` 
+### สร้าง VM 
+หลังจากที่เราทำการ Setting ทุกอย่างเรียบร้อยแล้วก็ให้เราทำการ ใช้คำสั่งเหล่านี้ในการสร้าง VM ขึ้นมาแต่สิ่งหนึ่งที่น่าสนใจก็คือเวลาที่เราสร้าง VM เราจะสามารถ Shell เข้าไปใน Container ได้ผ่านคำสั่งโดยตรงของ multipass exec เท่านั้น ซึ่งเหมือนกับคำสั่ง lxc exec ที่ใช้บน LXC Container เช่นกัน แต่ประเด็นก็คือถ้าเราอยากลอง SSH เข้าไปจริงๆผ่าน protocol SSH ล่ะ ? เพื่อทำการทดสอบความสมจริงต่างๆ สิง่ที่เกิดขึ้นก็คือเราต้องทำการ copy public key ที่ใช้ Shell เข้าไปยังปลายทาง VM นำไปต่อท้ายไว้ในไฟล์ /etc/authorized_keys นั่นเองซึ่งเราต้องทำแบบนี้ซ้ำๆ 3 หลายครั้งซึ่งถ้าเราจะ Set Predefined Template เราก็สามารถทำได้จากการใช้  Cloud Init Template ซึ่งเป็น Template สำหรับการสร้าง Virtual Machine โดยผมจะนำ public key ของเราไปวางไว้ใน vm-template.yaml ซึ่งจะทำให้เราสามารถ shell เข้าไปเครื่องปลายทางได้ทันทีนั่นเอง
+ซึ่งตัวอย่าง module นั้นก็จะมีมากมาย ![url "Cloud Init Module"](https://cloudinit.readthedocs.io/en/latest/topics/modules.html)
+โดยผมจะเลือกใช้ Module เกี่ยวกับ SSH นั่นก็คือ ssh_publish_hostkeys ในการเพิ่ม Public Key ลงไป
+ส่วน Spec ของ VM ขั้นต่ำจริงๆหลังจากที่ค่อย Tuning มาแล้วก็คือ Memory 4GB ซึ่งจะเป็น Minimum ขั้นต่ำของ Kubernetes ที่ต้องใช้พอดีส่วน Disk จากที่ลองมาน่าจะต้องใช้ประมาณ 12 GB ครับเพราะจากที่ลอง 8GB เหมือนจะน้อยไปและถ้า disk ใช้พื้นที่ไปมากกว่า Threshhold ที่ Kubelet (รู้สึกจะ 85%) ตั้งไว้ก็จะโดน DiskPressure Trigger และ Taint ขึ้นมาทำให้เครื่องที่สร้างมาทำอะไรไมไ่ด้เลยซึ่ง Default Disk นั้นคือ 5GB แต่เวลาติดตั้งและ pull Image อะไรเสร็จทั้งหมดจะใช้ประมาณ 6 - 7 Gb ปลายๆ และสุดท้ายก็ให้ Virtual CPU สัก 2 Core  
+```
+multipass launch ubuntu -n rancher-host -m 4G -d 12G -c 2   --cloud-init vm-template.yaml
+
+multipass launch ubuntu -n kube-master -m 4G -d 12G -c 2    --cloud-init vm-template.yaml
+
+multipass launch ubuntu -n kube-worker -m 4G -d 12G -c 2    --cloud-init vm-template.yaml
+
+multipass info --all   
+
+# ผลลัพธ์
+WARNING: cgroup v2 is not fully supported yet, proceeding with partial confinement
+Name:           kube-master
+State:          Running
+IPv4:           192.168.122.27
+Release:        Ubuntu 20.04.1 LTS
+Image hash:     36403f956294 (Ubuntu 20.04 LTS)
+Load:           2.36 0.64 0.22
+Disk usage:     4.5G out of 11.5G
+Memory usage:   831.0M out of 3.8G
+
+Name:           kube-worker
+State:          Running
+IPv4:           192.168.122.242
+Release:        Ubuntu 20.04.1 LTS
+Image hash:     36403f956294 (Ubuntu 20.04 LTS)
+Load:           2.87 0.67 0.22
+Disk usage:     7.7G out of 11.5G
+Memory usage:   532.3M out of 3.8G
+
+Name:           rancher-host
+State:          Running
+IPv4:           192.168.122.216
+Release:        Ubuntu 20.04.1 LTS
+Image hash:     36403f956294 (Ubuntu 20.04 LTS)
+Load:           1.18 0.32 0.11
+Disk usage:     4.5G out of 11.5G
+Memory usage:   838.5M out of 3.8G
+```
+# Install Docker ให้กับทุก Host ที่สร้างขึ้นมา
+สถาปัตยกรรมของ Rancher นั้นจะเรียกได้ว่าช่วย Abstract ความซับซ้อนของ Docker ก็ว่าได้เพราะว่าทุกอย่างนั้นล้วนเป็น Container Image หมดแล้ว
+```
+
+sudo apt-get update -y && sudo apt-get install docker.io -y && sudo systemctl start docker && sudo systemctl enable docker &&sudo usermod -aG docker $USER 
+
+```
+นั้นถ้าหากเราใช้ Fedora 33 จะมาพร้อมกับ library libvirt ในตัวอยู่แล้วแต่ถ้าหากใครใช้ Linux ประเภทอื่นก็สามารถติดตั้งได้ตาม Distribution ที่ตัวเองใช้งาน
 
 
 ใช้  multipass อนุญาต firewalld ด้วย
@@ -70,16 +148,6 @@ trusted
 
 ```
 
-# Create Virtual Machine ด้วย Multipass
-```
-multipass launch ubuntu -n rancher-host -m 4G -d 12G -c 2   --cloud-init vm-template.yaml
-
-multipass launch ubuntu -n kube-master -m 4G -d 12G -c 2    --cloud-init vm-template.yaml
-
-multipass launch ubuntu -n kube-worker -m 4G -d 12G -c 2    --cloud-init vm-template.yaml
-
-sudo apt-get update -y && sudo apt-get install docker.io -y && sudo systemctl start docker && sudo systemctl enable docker &&sudo usermod -aG docker $USER
-```
 
 
 ### Generate Certificate สำหรับ Self Signed
