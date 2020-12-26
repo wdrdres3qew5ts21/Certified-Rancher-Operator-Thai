@@ -1,7 +1,6 @@
 ![alt text](images/rancher-cover.png "Cover Image")
 # Introduction Kubernetes Container Platform Management
 (แต่สำหรับผู้เรียนรู้ใหม่การเรียนรู้ Kubernetes แบบลึกๆจนไปถึงแก่นนั้นเป็นสิ่งสำคัญนะ ! เพราะจะชวยให้เราต่อยอดเองได้ในอนาคตรวมไปถึงการ Debug ด้วยซึ่งสามารถตามไปที่ Repository ของอาจารย์จุ๊บ Damrongsak ได้กับ Kubernetes Hardway ซึ่งเป็น Repository ที่ดีมากๆ)
-
 แน่นอนว่าหลายๆคนในช่วงนี้ย่อมเคยได้ยินถึง Kubernetes และใช้งานกันแล้วบ้างซึ่งจะเห็นได้เลยว่า Kubernetes คือ Container Orchestration Platform 
 ที่ช่วยให้เราสามารถจัดการควบคุม Application ที่ pack เป็น Container Image เรียบร้อยแล้วแต่ต้องการ Deploy ไปหลายๆ Application และจะทราบได้อย่างไรว่า Application เหล่านัั้นทำงานแล้วมีปัญหาหรือไม่ ควรรับ Traffic ที่ Request เข้ามาหรือเปล่า ?  หรือควรพักไว้ก่อนเพราะว่า Application เรารับโหลดไม่ไหวและเริ่ม Delay แล้ว ซึ่งการจัดการในเชิง Platform Infrastructure ของ Application ก็จะถูกจัดการให้ง่ายด้วยด้วยการใช้ Kubernetes ซึ่งเราจะลองยกตัวอย่างให้ดูจากตัวอย่างเหล่านี้ครับ ว่า Kubernetes ใน Concept นั้นทำอะไรได้บ้าง 
 
@@ -77,7 +76,7 @@ multipass get local.driver # เช็ค driver Multipass
 ``` 
 ### สร้าง VM 
 หลังจากที่เราทำการ Setting ทุกอย่างเรียบร้อยแล้วก็ให้เราทำการ ใช้คำสั่งเหล่านี้ในการสร้าง VM ขึ้นมาแต่สิ่งหนึ่งที่น่าสนใจก็คือเวลาที่เราสร้าง VM เราจะสามารถ Shell เข้าไปใน Container ได้ผ่านคำสั่งโดยตรงของ multipass exec เท่านั้น ซึ่งเหมือนกับคำสั่ง lxc exec ที่ใช้บน LXC Container เช่นกัน แต่ประเด็นก็คือถ้าเราอยากลอง SSH เข้าไปจริงๆผ่าน protocol SSH ล่ะ ? เพื่อทำการทดสอบความสมจริงต่างๆ สิง่ที่เกิดขึ้นก็คือเราต้องทำการ copy public key ที่ใช้ Shell เข้าไปยังปลายทาง VM นำไปต่อท้ายไว้ในไฟล์ /etc/authorized_keys นั่นเองซึ่งเราต้องทำแบบนี้ซ้ำๆ 3 หลายครั้งซึ่งถ้าเราจะ Set Predefined Template เราก็สามารถทำได้จากการใช้  Cloud Init Template ซึ่งเป็น Template สำหรับการสร้าง Virtual Machine โดยผมจะนำ public key ของเราไปวางไว้ใน vm-template.yaml ซึ่งจะทำให้เราสามารถ shell เข้าไปเครื่องปลายทางได้ทันทีนั่นเอง
-ซึ่งตัวอย่าง module นั้นก็จะมีมากมาย ![url "Cloud Init Module"](https://cloudinit.readthedocs.io/en/latest/topics/modules.html)
+ซึ่งตัวอย่าง module นั้นก็จะมีมากมาย ["Cloud Init Module"](https://cloudinit.readthedocs.io/en/latest/topics/modules.html)
 โดยผมจะเลือกใช้ Module เกี่ยวกับ SSH นั่นก็คือ ssh_publish_hostkeys ในการเพิ่ม Public Key ลงไป
 ส่วน Spec ของ VM ขั้นต่ำจริงๆหลังจากที่ค่อย Tuning มาแล้วก็คือ Memory 4GB ซึ่งจะเป็น Minimum ขั้นต่ำของ Kubernetes ที่ต้องใช้พอดีส่วน Disk จากที่ลองมาน่าจะต้องใช้ประมาณ 12 GB ครับเพราะจากที่ลอง 8GB เหมือนจะน้อยไปและถ้า disk ใช้พื้นที่ไปมากกว่า Threshhold ที่ Kubelet (รู้สึกจะ 85%) ตั้งไว้ก็จะโดน DiskPressure Trigger และ Taint ขึ้นมาทำให้เครื่องที่สร้างมาทำอะไรไมไ่ด้เลยซึ่ง Default Disk นั้นคือ 5GB แต่เวลาติดตั้งและ pull Image อะไรเสร็จทั้งหมดจะใช้ประมาณ 6 - 7 Gb ปลายๆ และสุดท้ายก็ให้ Virtual CPU สัก 2 Core  
 ```
@@ -119,34 +118,28 @@ Disk usage:     4.5G out of 11.5G
 Memory usage:   838.5M out of 3.8G
 ```
 # Install Docker ให้กับทุก Host ที่สร้างขึ้นมา
-สถาปัตยกรรมของ Rancher นั้นจะเรียกได้ว่าช่วย Abstract ความซับซ้อนของ Docker ก็ว่าได้เพราะว่าทุกอย่างนั้นล้วนเป็น Container Image หมดแล้ว
+สถาปัตยกรรมของ Rancher นั้นจะเรียกได้ว่าช่วย Abstract ความซับซ้อนของ Docker ก็ว่าได้เพราะว่าทุกอย่างนั้นล้วนเป็น Container Image หมดแล้วของเพียงแค่ Pull ลงมาก็จะพร้อมใช้งานได้เลยซึ่งหมายความว่าขั้นตอนการติดตั้งปกติอย่าง kubelet ที่ปกติจะต้องทำงานด้วย Systemd ก็จะไม่ต้องลงแล้วแต่จะลงเป็น Container ของ Docker หมดเลย (ตรงจุดนี้มีความน่าสนใจอย่างยิ่งว่าการที่ทุกๆ Component อยู่ใน Container แล้วดีจริงหรือไม่) ซึ่งจะต่างจาก Kubernetes จริงๆซึ่ง "kubelet จำเป็นต้องลงเป็น systemd service" เพราะว่า kubelet เป็นส่วนที่ใช้ในการ Controll Pod สถานะรวมถึง Event ต่างๆที่เกิดขึ้นใน Kubernetes Node นั้นๆ (kubelet เจ๊งเท่ากับไม่สามารถควบคุมการสร้าง pod/ delete pod ได้) ซึ่ง kubelet ยังมีมากกว่านั้นอีกไม่ว่าจะเป็นเรื่องของการกำหนด flag ของ CoreDNS, Container Network Interface ซึ่งสามารถตามไปอ่านได้ที่ Repository ของอาจารย์จุ๊บกับ Kubernetes Hardway
+[Kubernetes Hardway ไทย](https://github.com/rdamrong/Kubernetes-The-Hard-Way-CentOS/blob/master/docs/10-install-worker-node.md)
 ```
 
 sudo apt-get update -y && sudo apt-get install docker.io -y && sudo systemctl start docker && sudo systemctl enable docker &&sudo usermod -aG docker $USER 
 
 ```
-นั้นถ้าหากเราใช้ Fedora 33 จะมาพร้อมกับ library libvirt ในตัวอยู่แล้วแต่ถ้าหากใครใช้ Linux ประเภทอื่นก็สามารถติดตั้งได้ตาม Distribution ที่ตัวเองใช้งาน
+
+# Rancher Architecture
+![alt txt](images/rancher-architecture-rancher-api-server.svg)
+หลังจากที่เราได้ทราบไปแล้วว่า Rancher นั้นเป็น Kubernetes Management Platform ซึ่งช่วยสนับสนุนตามคุณสมบัติต่างๆดั่งที่กล่าวไปทั้ง 3 ข้อจุดเด่นๆ แต่ในปัจจุบัน Rancher นั้นไม่ได้เป็นเพียงแค่ GUI ที่ใช้ในการ Deploy อีกต่อไปแล้วแต่ว่า Rancher Labs ซึ่งเป็นเจ้าของผลิตภันฑ์นั้นยังมี Kubernetes Distribution เป็นของตัวเองนั่นคือ Rancher Kubernetes Engine (RKE) ซึ่งใช้ในการ Host Rancher Pod ใน Cluster Kubernetes ซึ่งสมัยก่อนตั้งแต่ Rancher 2.4 หรือลงไปนั้นจะ Support เฉพาะกับ RKE เท่านั้นแต่ในปัจจุบัน Rancher สามารถ Deploy ได้บนทั้ง K3S และ RKE แล้ว ซึ่งจะขอใช้ภาพนี้ในการแยกความแตกต่างของแต่ล่ะ Product อีกทีหนึ่ง
+![alt txt](images/rancher-stack.png)
+### Rancher GUI ใช้จัดการ Kubernetes Platform
+ซึ่งสามารถ Deploy ไปสองแบบคือบน Docker และไปคุม Cluster Kubernetes ซึ่งจะใช้เฉพาะกับ "Development Environment เท่านั้น" ส่วนสำหรับ Production Grade เราจำเป็นที่ควรจะ Deploy เข้าไปใน RKE ซึ่งก็หมายความว่า Rancher จะกลายเป็น Pod ภายใน Kubernetes Cluster ซึ่งส่งผลให้ได้คุณสมบัติ HA ตามมาด้วยซึ่งถ้า deploy แบบ Docker container ตรงๆก็จะไมไ่ด้คุณสมบัตินี้นั่นเอง และ Rancher Labs เองก็แนะนำว่าให้ Deploy ใน RKE Cluster สำหรับ Production
+
+### Rancher Kubernetes Engine(RKE) CNCF-Certified Kubernetes distribution 
+เป็น Distribution หนึ่งของ Kubernetes ซึ่งออกแบบโดยทาง Rancher Labs เองสามารถสร้าง Cluster ของ Declarative YAML ได้และการ Deploy Component ติดตั้งเชื่อมต่อของ Cluster จะใช้เพียงแค่ Docker เป็น Engine Runtime เท่านั้นไม่ว่าจะเป็น ETCD, Kubelet (ปกติ Kubelet ต้องติดตั้งเป็น Systemd), Kube-Scheduler, API-Server, CNI ทุกอย่างล้วนแล้วแต่อยู่ใน Docker Container เท่านั้นก็จะทำการสร้าง Cluster Kubernetes ขึ้นมาได้แล้ว ซึ่งสำหรับเวอร์ชั่น Docker ที่สนับสนุนนั้นสามารถไปดูได้ที่เอกสารของทาง Rancher ซึ่ง Component ที่เป็น "Control Plane จะมองไม่เห็นเป็น pod ใน Kubernetes Cluster" ตรงนี้จะเป็นจุด Highlight ที่แตกต่างกับ Kubernetes แบบปกติที่ติดตั้งผ่าน kubeadm ซึ่งสามารถ Deploy ทุกอย่างด้วยคำสั่งเดียวคือ rke up และทำการสร้าง cluster แบบ interactive terminal ผ่านคำสั่ง rke config ตรงจุดนี้จะเป็นจุดแตกต่างที่เห็นได้ชัดระหว่าง kubeadm ที่ทรงพลังสามารถ custom ได้ละเอียดเห็นขั้นตอนการ Join Control Plane กับการใช้ RKE ที่สร้าง Cluster ได้ทันทีด้วยคำสั่งๆเดียว 
+
+### K3S Light weight Kubernetes สำหรับ Edge หรือ IoT
 
 
-ใช้  multipass อนุญาต firewalld ด้วย
-เมื่อสร้าง VM แล้วให้เราติดตั้ง package ที่จำเป้นในการใช้งานซึ่งก็คือ Docker และทำการเปิด Service ให้ใช้งานได้ 
-แต่ปัจจุบันบางรั้งจะมีปัญหา IP ไม่แจกมาจาก DHCP Bridge นั่นเป็นเพราะ Firewalld ทำการ Block ไว้
-ให้เราใช้คำสั่ง ip addr เพื่อดู ชื่อของ DHCP Bridge ว่ามี interface network ชื่อว่าอะไรและทำการอนุญาตด้วย
-ซึ่งความน่าจะเป็นที่เกิดขึ้นคือ Multipass จะใช้ QEMU เป็น default driver ในการสร้าง VM แล้วโดน block
-```
-ip addr # ดู interface
-                        [ชื่อinterface QEMU]
-firewall-cmd --add--interface= --zone=trusted
 
-[linxianer12@fedora Certified-Rancher-Operator]$ firewall-cmd --get-active-zones
-FedoraWorkstation
-  interfaces: wlp107s0
-libvirt
-  interfaces: virbr0
-trusted
-  interfaces: lxdbr0 mpqemubr0
-
-```
 
 
 
