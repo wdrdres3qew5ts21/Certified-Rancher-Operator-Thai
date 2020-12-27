@@ -117,6 +117,9 @@ Load:           1.18 0.32 0.11
 Disk usage:     4.5G out of 11.5G
 Memory usage:   838.5M out of 3.8G
 ```
+![alt Cockpit Showing Virtual Machine](images/cockpit-virtual%20machine.png)
+
+
 # Install Docker ให้กับทุก Host ที่สร้างขึ้นมา
 สถาปัตยกรรมของ Rancher นั้นจะเรียกได้ว่าช่วย Abstract ความซับซ้อนของ Docker ก็ว่าได้เพราะว่าทุกอย่างนั้นล้วนเป็น Container Image หมดแล้วของเพียงแค่ Pull ลงมาก็จะพร้อมใช้งานได้เลยซึ่งหมายความว่าขั้นตอนการติดตั้งปกติอย่าง kubelet ที่ปกติจะต้องทำงานด้วย Systemd ก็จะไม่ต้องลงแล้วแต่จะลงเป็น Container ของ Docker หมดเลย (ตรงจุดนี้มีความน่าสนใจอย่างยิ่งว่าการที่ทุกๆ Component อยู่ใน Container แล้วดีจริงหรือไม่) ซึ่งจะต่างจาก Kubernetes จริงๆซึ่ง "kubelet จำเป็นต้องลงเป็น systemd service" เพราะว่า kubelet เป็นส่วนที่ใช้ในการ Controll Pod สถานะรวมถึง Event ต่างๆที่เกิดขึ้นใน Kubernetes Node นั้นๆ (kubelet เจ๊งเท่ากับไม่สามารถควบคุมการสร้าง pod/ delete pod ได้) ซึ่ง kubelet ยังมีมากกว่านั้นอีกไม่ว่าจะเป็นเรื่องของการกำหนด flag ของ CoreDNS, Container Network Interface ซึ่งสามารถตามไปอ่านได้ที่ Repository ของอาจารย์จุ๊บกับ Kubernetes Hardway
 [Kubernetes Hardway ไทย](https://github.com/rdamrong/Kubernetes-The-Hard-Way-CentOS/blob/master/docs/10-install-worker-node.md)
@@ -151,13 +154,14 @@ sudo apt-get update -y && sudo apt-get install docker.io -y && sudo systemctl st
 
 ดั่งนั้นแล้วจะเห็นได้ว่าถ้าเราอยากได้ Feature แบบเต็มๆเลยคือสามารถทั้ง Delete Cluster Backup จัดการ Certificate Solution ทุกอย่างในที่เดียวจบไม่ต้องไปใช้ commandline ของ Cloud แต่ล่ะเจ้าแตกต่างกันไปในการ Backup เราก็อาจจะเลือกให้ Rancher เป็นคนทำทุกอย่างไปเลยนั่นเองจะได้ควบคุมได้ทั้งหมด แต่ทั้งนี้ก็ไมไ่ด้หมายความว่าวิธีนี้เป็นวิธีที่ดีที่สุด เพราะบางกรณีการใช้งานการที่เลือกการ Manage คนล่ะครึ่งระหว่าง Cloud Provider ที่มี Kubernetes พร้อมใช้งานเลยอย่าง Azure Kuberentes Service ก็อาจจะตอบโจทย์กว่าก็ได้นั่นเอง (ขึ้นกับเราและความเหมาะสมทุกอย่างมี Tradeoff)
 
+![alt Downstream Cluster Architecure](images/rancher-architecture-cluster-controller.svg)
 ### Authentication Proxy
-หลังจากที่เราได้เห็นภาพของ Kubernetes ไปแล้วว่า Kubernetes นั้นมี RBAC ก็จริงแต่การทำ RBAC Authroization ว่าแต่ล่ะ component บน Kubernetes สามารถ ใช้ Verb อะไร ทำอะไรได้บ้าง แต่ว่าไมไ่ด้มีเรื่องของการ Manage user ที่เป็นคนใช้จริงๆที่เวลาทำการ Authentication อาจจะทำผ่านการ login username password แล้วก็ได้ return ออกมาเป็น api otken ให้ใช้งานต่อไปซึ่ง Rancher Authentication proxy นั้นจะทำการจัดการเรื่องของ User ที่เป้นคนใช้จริงๆเพราะเราสามารถสร้าง User ให้สิทธิเขาในหน้าจอของ GUI ได้เลยนั่นเอง 
+หลังจากที่เราได้เห็นภาพของ Kubernetes ไปแล้วว่า Kubernetes นั้นมี RBAC ก็จริงแต่การทำ RBAC Authroization ว่าแต่ล่ะ component บน Kubernetes สามารถ ใช้ Verb อะไร ทำอะไรได้บ้าง แต่ว่าไมไ่ด้มีเรื่องของการ Manage user ที่เป็นคนใช้จริงๆที่เวลาทำการ Authentication อาจจะทำผ่านการ login username password, Active Directory หรือ GitHub แล้วก็ได้ return ออกมาเป็น api otken ให้ใช้งานต่อไปซึ่ง Rancher Authentication proxy นั้นจะทำการจัดการเรื่องของ User ที่เป้นคนใช้จริงๆเพราะเราสามารถสร้าง User ให้สิทธิเขาในหน้าจอของ GUI ได้เลยนั่นเอง 
 
 ### Cluster & Agent  
 ภายในหนึ่ง Cluster ก็จะมีหนึ่งตัวในการดูสถานะว่า Downstream (Cluster ที่โดน Manage) นั้นมีสถานะเป็นอย่างไรคำสั่งที่ส่งไปนั้นส่งไปถึงหรือไม่ ซึ่งก็จะส่งคำสั่งนี้ไปหา Cluster Agent แต่ถ้า Cluster Agent มีปัญหาก็จะใช้ Node Agent ในแต่ล่ะ Node แทน ซึ่ง Node Agent จะทำงานเป็น DaemonSet (ทำให้การันตีได้ว่าใน Cluster จะต้องมี Node Agent ในทุกๆ Node แน่ๆ) 
 
-# Authorization Endpoint
+### Authorization Endpoint
 หลังจากที่เราเห็นไปแล้วว่า Rancher มี Authentication Proxy ใช้ในการทำ Authentication จากศูนย์กลางแต่ในกรณีที่ Rancher Cluster Down ไปล่ะ ? 
 เราจะยังสามารถควบคุม Downstream Cluster ได้ไหม ? คำตอบนั่นก้คือได้เพราะว่าในทุกๆ cluster ที่โดน Manage นั้นจะมีการลง Authorization Endpoint เอาไว้ด้วยซึ่งต่อให้ Rancher ที่เป้น Cluster Manage ล่มไปผู้ใช้อย่างเราก็ยังใช้งาน Downstream Cluster ที่มีอยู่ได้อยู่ดีนั่นเองและอีกทั้งยังลดปัญหาเรื่องของ Geography Region ที่ต้อง Request ข้ามไปข้ามมาตลอดด้วยนั่นเอง (อยู่ใกล้อะไรก็ control ไปตามที่ต้องการเลย)
 ซึ่งตัวอย่างเช่นเรามี Rancher Clustester อยู่ที่อเมริกา แล้วเรามี Cluster ที่ทำงานจริงๆอยู่ที่ประเทศไทย ซึ่ง Developer ที่ใช้งานอยู่ที่ไทยเขาก็สามารถต่อตรงไปหา Cluster ไทยได้เลยผ่าน Authorizaztion Endpoint ใน Cluster ไทย ไม่จำเป็นต้อง Request ไปหา Cluster Management ที่อเมริกาแล้วให้ proxy ส่งกลับมาที่ไทยอีกที (ภาพกับเสียงประกอบใน Rancher Academy จะตลกมาก 5555)
@@ -241,17 +245,65 @@ CURRENT   NAME                 CLUSTER          AUTHINFO                        
           kube-devops-admin    kube-devops      clusterAdmin_Elasticsearch-Stack_kube-devops   
           kubeadm              kubeadm          kubernetes-admin                               
 *         rke                  rke              kube-admin-local        
-                       
+
 [linxianer12@fedora certified-rancher-operator]$ kubectl config current-context
 rke
 
 ```
 
-# ติดตั้ง Rancher ไปยัง RKE Cluster
-ตอนนี้
+ทดลองเรียกใช้คำสั่ง kubectl get pod -A เพื่อดู pod ทุก namespaces ว่าทำงานได้ปกติจริงๆเราไม่มีปัญหาเรื่องการ authentication
+ซึ่งผลลัพธ์ที่ได้มานานจะเหมือนกับที่บอกไว้คือเราจะไม่เห็น Pod ของ ETCD หรือพวก Component Control Plane ใดๆแต่พวกนั้นจะถูกทำงานเป็น Container ในแต่ล่ะ Host เฉยๆเท่านั้นซึ่งเราจะลองไป debug กันในส่วนถัดไปครับ (ผลลัพธ์ไม่จำเป้นต้องเหมือนกันนะ ขอแค่สามารถเรียกใช้ kubectl get pod แล้วไม่ติด error ก็พอแล้วเพระาันนี้ผมติดตั้งไปก่อนแล้ว)
 ```
+[linxianer12@fedora certified-rancher-operator]$ kubectl get pod -A
+NAMESPACE                 NAME                                       READY   STATUS              RESTARTS   AGE
+cattle-system             rancher-65db98499b-4xr6n                   1/1     Running             13         45h
+cattle-system             rancher-65db98499b-hcdbs                   1/1     Running             5          45h
+cattle-system             rancher-65db98499b-z4bbx                   1/1     Running             4          45h
+cattle-system             rancher-webhook-7bc7ffdf7c-rph95           1/1     Running             3          45h
+cert-manager              cert-manager-56d6bbcb86-v2mcv              1/1     Running             6          45h
+cert-manager              cert-manager-cainjector-6dd56cf757-jglzz   1/1     Running             12         45h
+cert-manager              cert-manager-webhook-6f84f655fb-lpbp6      1/1     Running             3          45h
+default                   apache-7bdd496cfd-5cwjz                    1/1     Running             3          41h
+default                   nginx-6d8c56b84c-bhf4r                     1/1     Running             3          41h
+default                   nginx-6d8c56b84c-hwhw5                     1/1     Running             3          41h
+default                   nginx-6d8c56b84c-k2vrg                     1/1     Running             3          41h
+default                   nginx-6d8c56b84c-s96fx                     1/1     Running             3          41h
+fleet-system              fleet-agent-77c78f9c74-f88kf               1/1     Running             6          45h
+fleet-system              fleet-controller-5d5dbcc7b9-6cp59          1/1     Running             17         45h
+fleet-system              gitjob-84b99676d4-vlh5f                    1/1     Running             6          45h
+ingress-nginx             default-http-backend-67cf578fc4-f6mhc      0/1     MatchNodeSelector   0          46h
+ingress-nginx             default-http-backend-67cf578fc4-h6p64      1/1     Running             0          3m55s
+ingress-nginx             nginx-ingress-controller-ffqhb             1/1     Running             4          44h
+kube-system               calico-kube-controllers-65996c8f7f-xjbjk   1/1     Running             4          44h
+kube-system               calico-node-7pg7v                          1/1     Running             3          44h
+kube-system               calico-node-fjtlh                          1/1     Running             4          44h
+kube-system               calico-node-z2n2t                          1/1     Running             4          44h
+kube-system               coredns-7c5566588d-s7mf5                   1/1     Running             3          44h
+kube-system               coredns-autoscaler-65bfc8d47d-w46ww        1/1     Running             3          44h
+kube-system               metrics-server-6b55c64f86-xcbjj            1/1     Running             3          44h
+kube-system               rke-coredns-addon-deploy-job-6tknj         0/1     Completed           0          46h
+kube-system               rke-ingress-controller-deploy-job-hqxbm    0/1     Completed           0          46h
+kube-system               rke-metrics-addon-deploy-job-n8cp8         0/1     Completed           0          46h
+kube-system               rke-network-plugin-deploy-job-9b6w2        0/1     Completed           0          46h
+rancher-operator-system   rancher-operator-dc6876565-2bzh2           1/1     Running             6          45h
+```
+
+# ติดตั้ง Rancher ไปยัง RKE Cluster
+ขึ้นตอนในการติดตั้ง Rancher ไปยัง Cluster Kubernetes ของเรานั่นก็คือเราจำเป็นที่จะต้องเตรียม Certificate เอาไว้และทำการแนบ Certificate นั้นไปกับ Helm ในการ Deploy แต่ถ้าหากเราไม่แนบ Certificate ไปด้วยจะถือว่าเราใช้ Default Option ในการ Deploy โดยให้ Rancher Generate Certificate เองซึ่งในเงื่อนไขนี้จำเป็นที่จะต้องให้ Cluster ของเรามี Cert-Manager ซึ่งเป็น Custom Resource Defination ในการจัดการรื่องขอ Certificate (ทั้งแบบ production และ self-signed) ซึ่งสำหรับบทความในการขอทำ Certificate ผ่าน Cert Manager นั้นสามารถไปอ่านที่บทความของผมแบบรายละเอียดได้ที่ Medium ผ่าน Link เลยครับ 
+![alt ](images/service%20mesh%20SSL%20DNS.png)
+[ทำความเข้าใจ TLS/ Certificate บน Kubernetes และ Service Mesh Gateway ผ่าน Cert-Manager แบบDNS Challenge](https://wdrdres3qew5ts21.medium.com/a5026c9ad4bc)
+
+เราจะเริ่มกันที่การสร้าง namespace ที่ชื่อว่า cert-manager ก่อนและติดตั้ง Cert-Manager ไปยัง namespace เดียวกับที่เราตั้งไว้
+ซึ่ง namespace ที่ใช้ในการติดตั้ง rancher ก็จะแนะนำติดตั้งตาม recommendation (เพื่อจะได้ไม่สับสนและหาเจอง่ายๆ) คือ namespace ชื่อ cattle-system 
+แล้วก็ทำการตั้งค่า default domain ที่ rancher จะ listen ว่า Serve ที่ Domain ใดซึ่งเราสามารถตั้งได้ตามใจชอบซึ่งอันนี้ผมทำบน local Workstation Fedora 33 ก็จะ เซ็ท host ให้ชื่อ rancher.cloudnative
+``` 
 kubectl create namespace cert-manager
+
 helm repo add jetstack https://charts.jetstack.io
+
+helm repo add rancher-stable https://releases.rancher.com/server-charts/stable
+
+helm repo update
 
 helm install \
   cert-manager jetstack/cert-manager \
@@ -259,16 +311,61 @@ helm install \
   --version v1.1.0 \
   --set installCRDs=true
 
-helm repo update
-
 kubectl create namespace cattle-system
 
 helm install rancher rancher-latest/rancher \
   --namespace cattle-system \
   --set hostname=rancher.cloudnative
-
-helm list
 ```
+### ทดลองตรวจสอบผลลัพธ์
+ถ้าผลลัพธ์การติดตั้งถูกต้องและเรามี Memory, Disk เพียงพอก็จะสามารถติดตั้งและ Deploy ได้สำเร็จแต่ในกรณีเราเรามี Memory น้อยเกินไป Pod ก็จะไม่สามารถ Schedule ได้หรืออาจจะ deploy ไปสักพักแล้วโดน Evicted ออกหมดทั้งหมดก็มีดังนั้นเพื่อให้ใช้ได้แบบอุ่นใจก็อย่าลืมดูเรื่องของ Memory, Disk ด้วยนะ
+```
+kubectl get pod -n cattle-system
+
+[linxianer12@fedora certified-rancher-operator]$ kubectl get pod -n cattle-system
+
+NAME                               READY   STATUS    RESTARTS   AGE
+rancher-65db98499b-4xr6n           1/1     Running   13         45h
+rancher-65db98499b-hcdbs           1/1     Running   5          45h
+rancher-65db98499b-z4bbx           1/1     Running   4          45h
+rancher-webhook-7bc7ffdf7c-rph95   1/1     Running   3          46h
+
+[linxianer12@fedora certified-rancher-operator]$ kubectl get pod -n cert-manager
+
+NAME                                       READY   STATUS    RESTARTS   AGE
+cert-manager-56d6bbcb86-v2mcv              1/1     Running   6          46h
+cert-manager-cainjector-6dd56cf757-jglzz   1/1     Running   12         46h
+cert-manager-webhook-6f84f655fb-lpbp6      1/1     Running   3          46h
+```
+
+![alt Welcome Homepage Rancher](images/welcome%20rancher.png)
+ซึ่งวิธีการ set domain นั่นก็คือการไปแก้ไขที่ไฟล์ /etc/hosts ตรงๆก็ได้เช่นกัน (Window จะอยู่ใน System32/driver/etc/hosts)
+```
+[linxianer12@fedora certified-rancher-operator]$ cat /etc/hosts
+192.168.122.242 rancher.cloudnative
+127.0.0.1   localhost localhost.localdomain localhost4 localhost4.localdomain4
+::1         localhost localhost.localdomain localhost6 localhost6.localdomain6
+```
+ถ้าหากใครมีปัญหาเข้าไปที่ Domain ไม่ได้ให้ลองเช็คดูด้วยนะว่าเราเข้าไปที่ Port 443 ที่ listen ไว้หรือเปล่า
+```
+[linxianer12@fedora certified-rancher-operator]$ kubectl get ingress -n cattle-system -owide
+NAME      HOSTS                 ADDRESS           PORTS     AGE
+rancher   rancher.cloudnative   192.168.122.242   80, 443   46h
+
+```
+เพราะถ้าเราไม่ได้ใช้ hosts เป็น * ก็หมายความว่า Domain ที่เข้ามานั้นต้อง Mapping ให้ตรงกันจริงๆด้วยถึงจะเข้าไปได้
+![alt All Cluster](images/cluster%20management.png)
+เมือเข้ามาก็จะเจอกับ Cluster ที่เราสามารถใช้งาไนด้จริงซึ่งก็จะนับกับเครื่องที่เป็น Worker Node นั่นเอง
+![alt Local Cluster Detail](images/local%20cluster.png)
+หน้านี้ก็จะเป็นการนำ Metrics จาก Metrics Server มาแสดงผลวึ่งเราก็สามารถดูได้ผ่าน commandline เช่นกันผ่านคำสั่ง kubectl top [pod/ node]
+```
+[linxianer12@fedora certified-rancher-operator]$ kubectl top node
+NAME           CPU(cores)   CPU%   MEMORY(bytes)   MEMORY%   
+kube-master    492m         24%    1304Mi          34%       
+kube-worker    418m         20%    1847Mi          48%       
+rancher-host   453m         22%    1327Mi          34%  
+```
+
 
 # Backup Snapshot
 ตอน Snapshot Restore ระบบจะ Down ลงไปสักพักนึงอย่างที่เราเทสกันเพราะว่ามัน restore ETCD 
