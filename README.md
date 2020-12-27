@@ -498,8 +498,6 @@ externalIp= IP ของ VM ใน Cluster
 
 ![alt Deploy Open Online Testing System](images/cluster-explorer/service4.png)
 
-
-
 ### ผลลัพธ์การ Setup Application และ Service
 
 ```
@@ -519,7 +517,7 @@ frontend-dino-service   NodePort    10.43.247.220   192.168.122.242   3000:30835
 kubernetes              ClusterIP   10.43.0.1       <none>            443/TCP          2d6h   <none>
 ```
 
-
+### Backup ETCD State
 
 ตอน Snapshot Restore ระบบจะ Down ลงไปสักพักนึงอย่างที่เราเทสกันเพราะว่ามัน restore ETCD 
 ```
