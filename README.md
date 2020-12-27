@@ -17,7 +17,8 @@
    
 2. User Management: ทุกๆ Application ใดๆล้วนแล้วแต่มีการทำ Authentication/ Authorization กันเกือบหมดเพราะจะได้ทราบว่าสิทธิของ User คนนั้นที่ควรจะได้คืออะไรบ้าง ซึ่งแน่นอนแล้วว่า kubernetes เองก็สามารถสร้าง user ขึ้นมาได้ด้วยนะ แต่สิ่งสำคัญที่จะเน้นย้ำก็คือจริงๆแล้ว User ใน Kubernetes นั้นไม่ได้มี Feature เรื่องของการทำ Authentication ตรงๆในตัวอย่างเช่นการ Sync กับ LDAP เพื่อนำ User เข้าสู่ระบบแต่ว่าใช้หลักการสร้าง Certificate ของ User คนนั้นขึ้นมาแล้วก็ทำงาน Upload Cert ผู้ใช้คนนั้นเข้าไปในระบบและกำหนดเอาไว้ผู้ใช้คนนี้สามารถ Access API Kbuernetes อะไรได้บ้างผ่านการสร้าง Role/ ClusterRole แล้วเราก็กำหนด Role Based Access Control เอาด้วยตัวเราเอง ซึ่งแน่นอนว่าการ config เหล่านี้หากเราเป็น Developer หรือทำเพื่อ Delivery Application ที่ไม่ได้มีผู้ใช้แชร์ร่วมกันกับคนอื่นในองค์กรขนาดใหญ่การทำ RBAC ผ่าน manifest YAML ก็ดูไม่ได้เสียหายอะไรและก็สะดวก  แต่สำหรับองค์กรขนาดใหญ่ๆหรือจริงๆไม่ต้องใหญ่มากก็ได้เพียงแต่ว่าองค์กรเรามี Process ในการทำงานที่เหมาะสมว่าใครควรจะสามารถ Access อะไรได้บ้างไม่อย่างนั้น Developer ที่พึ่งเข้ามาใหม่แล้วใช้ Account ที่มี permission ทำได้ทุกอย่างแล้วเผลอไปลบ Deployment จริงๆของ Application ในระบบขึ้นมาแล้วอยู่ในระหว่าง Production ขึ้นมา ก็คงเป็นเหตุการณ์ที่ไม่มีใครอยากให้เป็นนัก  ซึ่งการจัดการสิทธิเหล่านี้นั้นใน Kubernetes Dashbaord ก็จะไมไ่ด้แสดงให้เห็นตรงๆว่าเรามี User เป็นใครและทำอะไรได้บ้างผ่าน GUI แต่ถ้าจะมาดูแบบลึกๆก็คงต้องดูผ่าน YAML ผ่าน kubectl auth can-i นั่นเอง  ซึ่งตรงนี้เองก็จะเป็นจุดนึงที่ Rancher อันเป็น Kubernetes Management Platform เข้าไปช่วยกันการในเรื่องการของการทำ Authentication ได้ด้วยนั้นเองรวมถึงเห็นได้ว่าเรามี User กี่คนในระบบแต่ล่ะคนสามารถมีสิทธิ Read, Write Object ใดใน Namespace ใดได้บ้าง ซึ่งก็จะเป็น RBAC ที่มีความละเอียดชัดเจนและเป็นทางการเหมาะกับการใช้ในการ Production จริงๆมากขึ้นนั่นเอง 
     
-3. Developer Experience ที่ดีขึ้น Application จะออกมาดีได้ก็ต้องเกิดจากนักพัฒนาและทีมงานในองค์กรเราเองด้วยที่รู้สึกว่าเทคโนโลยีใหม่ๆเข้ามาช่วยอำนวยความสะดวกให้พร้อมจะใช้งานทันที โดยไม่จำเป็นต้องทำงานเดิมๆซ้ำอย่างเช่น Developer ของเราอยากจะได้ความสามารถของ Service Mesh ในตัว Rancher 2.5 ปัจจุบันเองนั้นก็จะรองรับ Istio 1.7 ซึ่งมาพร้อมกับความสามารถของ Service Mesh ที่จะช่วยให้ Infrastructure ของเราสามารถสร้างโอกาสการ Deploy ใหม่ๆเพิ่มความเสถียรในการ Deploy มากขึ้นเห็นภาพรวมใน Microservice จากการทราบว่า Request แต่ล่ะจุด Tracing แล้วเกิดคอขวดที่จุดใดบ้าง  หรือการ Provisiong แอพพลิเคชั่นอย่างง่ายดีผ่าน Helm Chart ซึ่งแน่นอนว่า Helm เป็นอีกเครื่องมือหนึ่งที่ช่วย Pack Kubernetes Object สำเร็จรูปเอาไว้แล้วเหมาะกับการ Deploy Application ที่เป็น Infrastructure มีเวอร์ชั่นชัดเจนและสามารถปรับแต่งจำนวนมากๆได้อย่างเช่นการ Deploy MySQL  Database เราสามารถใช้ commandline Helm เพื่อทำการดึง Template manifest ที่มี developer คนอื่นสร้างเอาไว้ใน Helm Repository มาใช้งานได้ทันทีพร้อมกับปรับแต่ง config ต่างๆได้ผ่าน values.yaml ซึ่งจะเป้นการ passing ค่าลงไปใน Tempalte ของ Helm เช่น MySQL นี้มี User ชื่ออะไร, Password อะไรล่ะ ? แล้วเริ่มทำงานที่ Port ไหนผ่านตัวแปรที่ Developer ที่สร้าง Helm Chart ออกแบบเอาไว้  แต่กระนั้นเองการ Deploy และ Config Infrastrucutre จะดีขึ้นและให้ความรู้สึกสนุกขึ้นไหม ถ้าหากเราสามารถกดผ่าน GUI และให้ Rancher ไปทำการ Deploy Helm Chart ให้และไม่จำเป้นต้องแนบ values.yaml ซึ่งใช้ในการ assing argument ผ่าน commandline แต่สามารถกรอกผ่านหน้า GUI ได้เลย ตัวนี้เองก็เป็นอีกสิ่งสำคัญที่ช่วยให้ Developer Experience มีความสนุกมากขึ้น  สามารถเลือกใช้งาน Application จาก Helm Template ได้เลย และไม่ใช่แค่การ Deploy Helm Chart ยังมีอีกหลายๆอย่างเช่นการ Monitroing Infrastructure/ Notification ไปยังช่องทางต่างๆอีกด้วย ซึ่งจะช่วยให้ Developer Experience มีสีสันสนุกมากขึ้นแน่นอน (Dev Happy แอพก็ออกมาดี ! อิๆ)  
+3. Developer Experience ที่ดีขึ้น Application จะออกมาดีได้ก็ต้องเกิดจากนักพัฒนาและทีมงานในองค์กรเราเองด้วยที่รู้สึกว่าเทคโนโลยีใหม่ๆเข้ามาช่วยอำนวยความสะดวกให้พร้อมจะใช้งานทันที โดยไม่จำเป็นต้องทำงานเดิมๆซ้ำอย่างเช่น Developer ของเราอยากจะได้ความสามารถของ Service Mesh ในตัว Rancher 2.5 ปัจจุบันเองนั้นก็จะรองรับ Istio 1.7 ซึ่งมาพร้อมกับความสามารถของ Service Mesh ที่จะช่วยให้ Infrastructure ของเราสามารถสร้างโอกาสการ Deploy ใหม่ๆเพิ่มความเสถียรในการ Deploy มากขึ้นเห็นภาพรวมใน Microservice จากการทราบว่า Request แต่ล่ะจุด Tracing แล้วเกิดคอขวดที่จุดใดบ้าง  หรือการ Provisiong แอพพลิเคชั่นอย่างง่ายดีผ่าน Helm Chart ซึ่งแน่นอนว่า Helm เป็นอีกเครื่องมือหนึ่งที่ช่วย Pack Kubernetes Object สำเร็จรูปเอาไว้แล้วเหมาะกับการ Deploy Application ที่เป็น Infrastructure มีเวอร์ชั่นชัดเจนและสามารถปรับแต่งจำนวนมากๆได้อย่างเช่นการ Deploy MySQL  Database เราสามารถใช้ commandline Helm เพื่อทำการดึง Template manifest ที่มี developer คนอื่นสร้างเอาไว้ใน Helm Repository มาใช้งานได้ทันทีพร้อมกับปรับแต่ง config ต่างๆได้ผ่าน values.yaml ซึ่งจะเป้นการ passing ค่าลงไปใน Tempalte ของ Helm เช่น MySQL นี้มี User ชื่ออะไร, Password อะไรล่ะ ? แล้วเริ่มทำงานที่ Port ไหนผ่านตัวแปรที่ Developer ที่สร้าง Helm Chart ออกแบบเอาไว้ [alt Helm คืออะไรใน Kubernetes](https://medium.com/sirisoft/afc67049dadf) 
+   แต่กระนั้นเองการ Deploy และ Config Infrastrucutre จะดีขึ้นและให้ความรู้สึกสนุกขึ้นไหม ถ้าหากเราสามารถกดผ่าน GUI และให้ Rancher ไปทำการ Deploy Helm Chart ให้และไม่จำเป้นต้องแนบ values.yaml ซึ่งใช้ในการ assing argument ผ่าน commandline แต่สามารถกรอกผ่านหน้า GUI ได้เลย ตัวนี้เองก็เป็นอีกสิ่งสำคัญที่ช่วยให้ Developer Experience มีความสนุกมากขึ้น  สามารถเลือกใช้งาน Application จาก Helm Template ได้เลย และไม่ใช่แค่การ Deploy Helm Chart ยังมีอีกหลายๆอย่างเช่นการ Monitroing Infrastructure/ Notification ไปยังช่องทางต่างๆอีกด้วย ซึ่งจะช่วยให้ Developer Experience มีสีสันสนุกมากขึ้นแน่นอน (Dev Happy แอพก็ออกมาดี ! อิๆ)  
 
 # System Requirement
 1. Fedora 33 Workstation สำหรับทำงาน Ram 16GB, 4 Core - 8 Thread : Yoga C930 
@@ -213,7 +214,7 @@ rke up
 ```
 
 # ผลลัพธ์
-หลังจากที่เราทำการสร้าง Cluster สำเร็จแล้วเราจะได้ไฟล์มาสำคัญมากๆมาสองไฟล์นั้นก็คือ cluster.rkestate ซึ่งใช้ในการเก็บ key access ทั้งอย่างของ kubernetes cluster ซึ่งปกติแล้วจะถูกเก้บอยู่ใน /etc/kubernetes/pki [Kubernetes PKI](https://kubernetes.io/docs/setup/best-practices/certificates/) แต่ด้วยการที่ทุกอย่างเป็น Docker แล้วการ Backup ก็เลยมาอยู่ในไฟล์นี้แทนนั่นเอง ซึ่งไฟล์นี้ห้ามหายเด็ดขาดต้องบันทึกเอาไว้ตลออดไม่อย่างนั้นจะไม่สามารถไปทำการสร้าง Node ใหม่มา Join อะไรได้แล้วเพราะว่ามันขาด Key สำคัญในการทำ Signing Certificate ไปนั่นเอง (รวมไปถึงการทำ Authentication) 
+หลังจากที่เราทำการสร้าง Cluster สำเร็จแล้วเราจะได้ไฟล์มาสำคัญมากๆมาสองไฟล์นั้นก็คือ cluster.rkestate ซึ่งใช้ในการเก็บ key access ทั้งอย่างของ kubernetes cluster ซึ่งปกติแล้วจะถูกเก้บอยู่ใน /etc/kubernetes/pki [รายละเอียดการจัดการ Certificate Kubernetes PKI](https://kubernetes.io/docs/setup/best-practices/certificates/) แต่ด้วยการที่ทุกอย่างเป็น Docker แล้วการ Backup ก็เลยมาอยู่ในไฟล์นี้แทนนั่นเอง ซึ่งไฟล์นี้ห้ามหายเด็ดขาดต้องบันทึกเอาไว้ตลออดไม่อย่างนั้นจะไม่สามารถไปทำการสร้าง Node ใหม่มา Join อะไรได้แล้วเพราะว่ามันขาด Key สำคัญในการทำ Signing Certificate ไปนั่นเอง (รวมไปถึงการทำ Authentication) 
 และอีกไฟลืหนึ่งที่ได้มาจะเป็นไฟล์ kube_config_cluster.yaml ซึ่งภายในก็จะมี token สำหรับใช้ authenticatino กับ kube-apiserver ผ่าน kubectl นั่นเองซึ่งเราจะต้องนำข้อมูลในไฟล์นี้ไปเซ็ทใน ~/.kube/config ภายใน laptop ของเราหรือจะเซ็ทเป็น environment variable ก็ได้ขอเพียงแค่เราเก็บไฟล์นี้เอาไว้นั่นเอง
 
 # ทดสอบการใช้งาน Kuberentes Cluster
@@ -365,6 +366,82 @@ kube-master    492m         24%    1304Mi          34%
 kube-worker    418m         20%    1847Mi          48%       
 rancher-host   453m         22%    1327Mi          34%  
 ```
+เราจะลองมาดูกันว่าแล้ว Cluster นี้มีกี่ Node ได้จาก Tab Node ซึ่งถ้าใช้ไฟล์ manifest ตามของผมนั้นก็จะสร้างมาทั้งหมด 3 Node ด้วยกันแต่จะมีแค่ Node เดียวเท่านั้นที่เป็น Worker Node ทำให้เราเห็น Resource แบบสรุปแล้วแค่ Node เดียวนั่นเอง
+![alt Node Detail in Cluster](images/cluster%20node%20detail.png)
+จากนี้เราจะลองมาเปลี่ยน Role ของ Node กันด้วยการแก้ผ่าน rke command lineโดยจะทดลองเปลี่ยน kube-master ให้มี role เป็น Worker Node แต่เราจะมาเริ่มดู Overview GUI ของ Rancher กันก่อนว่า Configuration แต่ล่ะ Node นั้นดูได้จากที่ไหน
+
+# Node Role 
+ดูได้จาก label ที่แปะไว้ว่าเป็น node ประเภทไหน
+1. node-role.kubernetes.io/worker: "true"
+2. node-role.kubernetes.io/controlplane: "true"
+3. node-role.kubernetes.io/etcd: "true"
+### Worker node
+```
+apiVersion: v1
+kind: Node
+metadata:
+  annotations:
+    node.alpha.kubernetes.io/ttl: "0"
+    projectcalico.org/IPv4Address: 192.168.122.242/24
+    projectcalico.org/IPv4IPIPTunnelAddr: 10.42.73.128
+    rke.cattle.io/external-ip: 192.168.122.242
+    rke.cattle.io/internal-ip: 192.168.122.242
+    volumes.kubernetes.io/controller-managed-attach-detach: "true"
+  creationTimestamp: "2020-12-25T06:50:10Z"
+  labels:
+    beta.kubernetes.io/arch: amd64
+    beta.kubernetes.io/os: linux
+    kubernetes.io/arch: amd64
+    kubernetes.io/hostname: kube-worker
+    kubernetes.io/os: linux
+    node-role.kubernetes.io/worker: "true"
+  name: kube-worker
+  resourceVersion: "47985"
+  selfLink: /api/v1/nodes/kube-worker
+  uid: 68751cc1-6d05-48d6-9a62-a7eb2140a0e1
+spec:
+  podCIDR: 10.42.2.0/24
+  podCIDRs:
+  - 10.42.2.0/24
+```
+### Control Plane, ETCD Node
+```
+apiVersion: v1
+kind: Node
+metadata:
+  annotations:
+    node.alpha.kubernetes.io/ttl: "0"
+    projectcalico.org/IPv4Address: 192.168.122.27/24
+    projectcalico.org/IPv4IPIPTunnelAddr: 10.42.221.192
+    rke.cattle.io/external-ip: 192.168.122.27
+    rke.cattle.io/internal-ip: 192.168.122.27
+    volumes.kubernetes.io/controller-managed-attach-detach: "true"
+  creationTimestamp: "2020-12-25T06:50:08Z"
+  labels:
+    beta.kubernetes.io/arch: amd64
+    beta.kubernetes.io/os: linux
+    kubernetes.io/arch: amd64
+    kubernetes.io/hostname: kube-master
+    kubernetes.io/os: linux
+    node-role.kubernetes.io/controlplane: "true"
+    node-role.kubernetes.io/etcd: "true"
+  name: kube-master
+  resourceVersion: "49813"
+  selfLink: /api/v1/nodes/kube-master
+  uid: 8710f2a4-79ff-4b14-9c23-b6caee1c0e06
+```
+
+ซึ่งเราสามารถทดลองไปแก้ไขได้จากการ Inspect เข้าไปใน Cluster นั้นผ่าน GUI Cluster Explorer เมื่อกดไปแล้ว URL ลอง Domain ก็จะเปลี่ยนไปมีคำว่า /explorer ต่อท้ายเป็น rootpath เริ่มต้นสำหรับ View Mode Cluster นั้นๆซึ่งจะใช้งานแทน Kubernetes Dashboard ได้เลยและให้รายละเอียดที่ชัดเจนมากกว่า
+![alt Cluster Explorer](images/cluster-explorer/cluster%20exploter%20dashboard.png)
+
+เราจะลองเข้าไปต่อที่ Node Detail ในหน้า View ของ Clsuter Explorer
+ซึ่งตรงนั้นจะแสดงให้เราเห็นถึง Threshold ที่ตั้งโดย Kubelet แบบเห็นชัดเจนเข้าใจง่ายว่า Node ของเรานั้นมีปัญหาหรือไม่รวมไปถึง Metrics ต่างๆอีกด้วย
+![alt Cluster Explorer](images/cluster-explorer/node%20describe%20metrcis.png)
+
+เราสามารถสลับ View โหมดให้เป็น YAML ได้โดยการกดที่ tab YAML
+![alt Cluster Explorer](images/cluster-explorer/yaml%20node.png)
+
+### ทดลองเปลี่ยน Role ของ Node ผ่านการแก้ไข Declarative YAML
 
 
 # Backup Snapshot
@@ -544,66 +621,7 @@ ubuntu@kube-worker:~$ docker network inspect 23b
 ]   
 
 ```
-# Node Role 
-ดูได้จาก label ที่แปะไว้ว่าเป็น node ประเภทไหน
-1. node-role.kubernetes.io/worker: "true"
-2. node-role.kubernetes.io/controlplane: "true"
-3. node-role.kubernetes.io/etcd: "true"
-### Worker node
-```
-apiVersion: v1
-kind: Node
-metadata:
-  annotations:
-    node.alpha.kubernetes.io/ttl: "0"
-    projectcalico.org/IPv4Address: 192.168.122.242/24
-    projectcalico.org/IPv4IPIPTunnelAddr: 10.42.73.128
-    rke.cattle.io/external-ip: 192.168.122.242
-    rke.cattle.io/internal-ip: 192.168.122.242
-    volumes.kubernetes.io/controller-managed-attach-detach: "true"
-  creationTimestamp: "2020-12-25T06:50:10Z"
-  labels:
-    beta.kubernetes.io/arch: amd64
-    beta.kubernetes.io/os: linux
-    kubernetes.io/arch: amd64
-    kubernetes.io/hostname: kube-worker
-    kubernetes.io/os: linux
-    node-role.kubernetes.io/worker: "true"
-  name: kube-worker
-  resourceVersion: "47985"
-  selfLink: /api/v1/nodes/kube-worker
-  uid: 68751cc1-6d05-48d6-9a62-a7eb2140a0e1
-spec:
-  podCIDR: 10.42.2.0/24
-  podCIDRs:
-  - 10.42.2.0/24
-```
-### Control Plane, ETCD Node
-```
-apiVersion: v1
-kind: Node
-metadata:
-  annotations:
-    node.alpha.kubernetes.io/ttl: "0"
-    projectcalico.org/IPv4Address: 192.168.122.27/24
-    projectcalico.org/IPv4IPIPTunnelAddr: 10.42.221.192
-    rke.cattle.io/external-ip: 192.168.122.27
-    rke.cattle.io/internal-ip: 192.168.122.27
-    volumes.kubernetes.io/controller-managed-attach-detach: "true"
-  creationTimestamp: "2020-12-25T06:50:08Z"
-  labels:
-    beta.kubernetes.io/arch: amd64
-    beta.kubernetes.io/os: linux
-    kubernetes.io/arch: amd64
-    kubernetes.io/hostname: kube-master
-    kubernetes.io/os: linux
-    node-role.kubernetes.io/controlplane: "true"
-    node-role.kubernetes.io/etcd: "true"
-  name: kube-master
-  resourceVersion: "49813"
-  selfLink: /api/v1/nodes/kube-master
-  uid: 8710f2a4-79ff-4b14-9c23-b6caee1c0e06
-```
+
 
 # Project ประกอบไปด้วยหลายๆ Namespace
 1. เราไม่สามารถ move namespace ไปยัง Proejct ที่ถูก set Quota ได้
