@@ -125,10 +125,8 @@ Memory usage:   838.5M out of 3.8G
 sudo apt-get update -y && sudo apt-get install docker.io -y && sudo systemctl start docker && sudo systemctl enable docker &&sudo usermod -aG docker $USER 
 
 ```
+# Product จาก Rancher Labs
 
-# Rancher Architecture
-![alt txt](images/rancher-architecture-rancher-api-server.svg)
-หลังจากที่เราได้ทราบไปแล้วว่า Rancher นั้นเป็น Kubernetes Management Platform ซึ่งช่วยสนับสนุนตามคุณสมบัติต่างๆดั่งที่กล่าวไปทั้ง 3 ข้อจุดเด่นๆ แต่ในปัจจุบัน Rancher นั้นไม่ได้เป็นเพียงแค่ GUI ที่ใช้ในการ Deploy อีกต่อไปแล้วแต่ว่า Rancher Labs ซึ่งเป็นเจ้าของผลิตภันฑ์นั้นยังมี Kubernetes Distribution เป็นของตัวเองนั่นคือ Rancher Kubernetes Engine (RKE) ซึ่งใช้ในการ Host Rancher Pod ใน Cluster Kubernetes ซึ่งสมัยก่อนตั้งแต่ Rancher 2.4 หรือลงไปนั้นจะ Support เฉพาะกับ RKE เท่านั้นแต่ในปัจจุบัน Rancher สามารถ Deploy ได้บนทั้ง K3S และ RKE แล้ว ซึ่งจะขอใช้ภาพนี้ในการแยกความแตกต่างของแต่ล่ะ Product อีกทีหนึ่ง
 ![alt txt](images/rancher-stack.png)
 ### Rancher GUI ใช้จัดการ Kubernetes Platform
 ซึ่งสามารถ Deploy ไปสองแบบคือบน Docker และไปคุม Cluster Kubernetes ซึ่งจะใช้เฉพาะกับ "Development Environment เท่านั้น" ส่วนสำหรับ Production Grade เราจำเป็นที่ควรจะ Deploy เข้าไปใน RKE ซึ่งก็หมายความว่า Rancher จะกลายเป็น Pod ภายใน Kubernetes Cluster ซึ่งส่งผลให้ได้คุณสมบัติ HA ตามมาด้วยซึ่งถ้า deploy แบบ Docker container ตรงๆก็จะไมไ่ด้คุณสมบัตินี้นั่นเอง และ Rancher Labs เองก็แนะนำว่าให้ Deploy ใน RKE Cluster สำหรับ Production
@@ -137,7 +135,37 @@ sudo apt-get update -y && sudo apt-get install docker.io -y && sudo systemctl st
 เป็น Distribution หนึ่งของ Kubernetes ซึ่งออกแบบโดยทาง Rancher Labs เองสามารถสร้าง Cluster ของ Declarative YAML ได้และการ Deploy Component ติดตั้งเชื่อมต่อของ Cluster จะใช้เพียงแค่ Docker เป็น Engine Runtime เท่านั้นไม่ว่าจะเป็น ETCD, Kubelet (ปกติ Kubelet ต้องติดตั้งเป็น Systemd), Kube-Scheduler, API-Server, CNI ทุกอย่างล้วนแล้วแต่อยู่ใน Docker Container เท่านั้นก็จะทำการสร้าง Cluster Kubernetes ขึ้นมาได้แล้ว ซึ่งสำหรับเวอร์ชั่น Docker ที่สนับสนุนนั้นสามารถไปดูได้ที่เอกสารของทาง Rancher ซึ่ง Component ที่เป็น "Control Plane จะมองไม่เห็นเป็น pod ใน Kubernetes Cluster" ตรงนี้จะเป็นจุด Highlight ที่แตกต่างกับ Kubernetes แบบปกติที่ติดตั้งผ่าน kubeadm ซึ่งสามารถ Deploy ทุกอย่างด้วยคำสั่งเดียวคือ rke up และทำการสร้าง cluster แบบ interactive terminal ผ่านคำสั่ง rke config ตรงจุดนี้จะเป็นจุดแตกต่างที่เห็นได้ชัดระหว่าง kubeadm ที่ทรงพลังสามารถ custom ได้ละเอียดเห็นขั้นตอนการ Join Control Plane กับการใช้ RKE ที่สร้าง Cluster ได้ทันทีด้วยคำสั่งๆเดียว 
 
 ### K3S Light weight Kubernetes สำหรับ Edge หรือ IoT
+เป็น Distribution หนึ่งของ Kubernetes ที่มีขนาดเล็กใช้ Memory, CPU แค่นิดเดียวและมี Binary สามารถเอาไปทำงานใน Rasberry Pie ได้หรือเครื่องที่มีสถาปัตยกรรม CPU แบบ Arm
 
+# Rancher Architecture
+![alt txt](images/rancher-architecture-rancher-api-server.svg)
+หลังจากที่เราได้ทราบไปแล้วว่า Rancher นั้นเป็น Kubernetes Management Platform ซึ่งช่วยสนับสนุนตามคุณสมบัติต่างๆดั่งที่กล่าวไปทั้ง 3 ข้อจุดเด่นๆ แต่ในปัจจุบัน Rancher นั้นไม่ได้เป็นเพียงแค่ GUI ที่ใช้ในการ Deploy อีกต่อไปแล้วแต่ว่า Rancher Labs ซึ่งเป็นเจ้าของผลิตภันฑ์นั้นยังมี Kubernetes Distribution เป็นของตัวเองนั่นคือ Rancher Kubernetes Engine (RKE) ซึ่งใช้ในการ Host Rancher Pod ใน Cluster Kubernetes ซึ่งสมัยก่อนตั้งแต่ Rancher 2.4 หรือลงไปนั้นจะ Support เฉพาะกับ RKE เท่านั้นแต่ในปัจจุบัน Rancher สามารถ Deploy ได้บนทั้ง K3S และ RKE แล้ว 
+สำหรับ Architecture ของ Rancher Cluster นั้นก็จะประกอบไปด้วย Upstream และ Downstream ถ้าให้มองเข้าใจอย่างง่ายๆ Upstream คือส่วนที่ใช้ในการ Manage ส่วน Downstream คือ Cluster ปลายทางขาล่างที่ถูกควบคุมอีกทีดู Rancher Cluster นั่นเอง วึ่งใน Cluster ปลายทางก็จะต้องมี Cluster Agent ลงเอาไว้เพื่อทำการติดต่อกับ Cluster Controller ว่าสถานะตอนนี้ Cluster เป็นอย่างไรบ้างมีจำนวน Pod หรือ Configuration เป็นไปตามที่ Upstream สั่งคำสั่งมาแล้วหรือยัง ซึ่งแต่ล่ะ Node เองก็จะยังมี Node Agent เป็นของตัวเองด้วยเพื่อดูสถานะของ Node แต่การที่จะทำเรื่องของ Downstream Cluster ที่ Rancher ไป Manage ควบคุมได้เต็มๆที่จุดสำคัญที่ต้องเน้นย้ำก็คือ
+### ประเภทการ Provisioning
+1. Rancher สร้าง Kubernetes RKE ผ่าน Rancher เองเราสามารถควบคุม Life Cycle & Backup Restore Database ETCD ได้ทั้งหมด ซึ่งนั่นก็เป็นเพราะว่า Rancher สามารถ Access Control Plane ของ Kubernetes ได้ตรงๆ (เพราะว่า Rancher เป็นคน Provisioning VM ขึ้นมาด้วยตัวเอง) จึงสามารถเข้าถึง ETCD Database, Rotate Certificate ซึ่งความสามารถนี้เกิดขึ้นได้เพราะ Rancher เป็นคนสร้างเองทุกอย่างเสมือนมีคำสั่ง kubeadm ถือติดตัวเอาไว้แล้วเข้าไป Access ได้ทุกอย่าง
+2. Cluster ที่สร้างด้วย Hosted Cloud Provider เช่น AWS, Azure, Google ด้วยวิธีการนำ Access Key มาใส่จะไม่สามารถได้ Feature เรื่องของการ Backup/ Restore ETCD นั่นเป็นเพราะเรื่องของการทำ Certificate Rotation, ETCD นั้นเป็น Feature ของแต่ล่ะ Cloud Provider ที่มีไว้ให้เองแล้ว ซึ่งถ้าอยากจะทำก็ต้องไปใช้ commandline ของแต่ล่ะเจ้าในการ backup เองอย่างเช่น google cloud ก็จะมี commandline ในการ rotate certificate (ซึ่งตรงจุดนี้ก็จะเป็น tradeoff ที่เราแลกการ manage คนล่ะครึ่งๆกับ Rancher นั่นเองทำให้เราก็เลยไม่สามารถควบคุมได้ทั้งหมด) แต่จะมี Feature Cloning Template Cluster ไปยัง Cluster ใหม่ให้สามารถ Config เหมือนกันได้
+3. Imported Cluster ก็จะเหมือนกับ Cluster ที่ถูก provisining ไว้อยู่แล้วเราแค่อยากเครื่อง Cluster นั้นมา Join เข้าไปให้ Rancher Manage ได้เฉยๆนั่นเอง
+
+[url ข้อมูลอ้างอิง](https://rancher.com/docs/rancher/v2.x/en/cluster-provisioning/)
+
+ดั่งนั้นแล้วจะเห็นได้ว่าถ้าเราอยากได้ Feature แบบเต็มๆเลยคือสามารถทั้ง Delete Cluster Backup จัดการ Certificate Solution ทุกอย่างในที่เดียวจบไม่ต้องไปใช้ commandline ของ Cloud แต่ล่ะเจ้าแตกต่างกันไปในการ Backup เราก็อาจจะเลือกให้ Rancher เป็นคนทำทุกอย่างไปเลยนั่นเองจะได้ควบคุมได้ทั้งหมด แต่ทั้งนี้ก็ไมไ่ด้หมายความว่าวิธีนี้เป็นวิธีที่ดีที่สุด เพราะบางกรณีการใช้งานการที่เลือกการ Manage คนล่ะครึ่งระหว่าง Cloud Provider ที่มี Kubernetes พร้อมใช้งานเลยอย่าง Azure Kuberentes Service ก็อาจจะตอบโจทย์กว่าก็ได้นั่นเอง (ขึ้นกับเราและความเหมาะสมทุกอย่างมี Tradeoff)
+
+### Authentication Proxy
+หลังจากที่เราได้เห็นภาพของ Kubernetes ไปแล้วว่า Kubernetes นั้นมี RBAC ก็จริงแต่การทำ RBAC Authroization ว่าแต่ล่ะ component บน Kubernetes สามารถ ใช้ Verb อะไร ทำอะไรได้บ้าง แต่ว่าไมไ่ด้มีเรื่องของการ Manage user ที่เป็นคนใช้จริงๆที่เวลาทำการ Authentication อาจจะทำผ่านการ login username password แล้วก็ได้ return ออกมาเป็น api otken ให้ใช้งานต่อไปซึ่ง Rancher Authentication proxy นั้นจะทำการจัดการเรื่องของ User ที่เป้นคนใช้จริงๆเพราะเราสามารถสร้าง User ให้สิทธิเขาในหน้าจอของ GUI ได้เลยนั่นเอง 
+
+### Cluster & Agent  
+ภายในหนึ่ง Cluster ก็จะมีหนึ่งตัวในการดูสถานะว่า Downstream (Cluster ที่โดน Manage) นั้นมีสถานะเป็นอย่างไรคำสั่งที่ส่งไปนั้นส่งไปถึงหรือไม่ ซึ่งก็จะส่งคำสั่งนี้ไปหา Cluster Agent แต่ถ้า Cluster Agent มีปัญหาก็จะใช้ Node Agent ในแต่ล่ะ Node แทน ซึ่ง Node Agent จะทำงานเป็น DaemonSet (ทำให้การันตีได้ว่าใน Cluster จะต้องมี Node Agent ในทุกๆ Node แน่ๆ) 
+
+# Authorization Endpoint
+หลังจากที่เราเห็นไปแล้วว่า Rancher มี Authentication Proxy ใช้ในการทำ Authentication จากศูนย์กลางแต่ในกรณีที่ Rancher Cluster Down ไปล่ะ ? 
+เราจะยังสามารถควบคุม Downstream Cluster ได้ไหม ? คำตอบนั่นก้คือได้เพราะว่าในทุกๆ cluster ที่โดน Manage นั้นจะมีการลง Authorization Endpoint เอาไว้ด้วยซึ่งต่อให้ Rancher ที่เป้น Cluster Manage ล่มไปผู้ใช้อย่างเราก็ยังใช้งาน Downstream Cluster ที่มีอยู่ได้อยู่ดีนั่นเองและอีกทั้งยังลดปัญหาเรื่องของ Geography Region ที่ต้อง Request ข้ามไปข้ามมาตลอดด้วยนั่นเอง (อยู่ใกล้อะไรก็ control ไปตามที่ต้องการเลย)
+ซึ่งตัวอย่างเช่นเรามี Rancher Clustester อยู่ที่อเมริกา แล้วเรามี Cluster ที่ทำงานจริงๆอยู่ที่ประเทศไทย ซึ่ง Developer ที่ใช้งานอยู่ที่ไทยเขาก็สามารถต่อตรงไปหา Cluster ไทยได้เลยผ่าน Authorizaztion Endpoint ใน Cluster ไทย ไม่จำเป็นต้อง Request ไปหา Cluster Management ที่อเมริกาแล้วให้ proxy ส่งกลับมาที่ไทยอีกที (ภาพกับเสียงประกอบใน Rancher Academy จะตลกมาก 5555)
+ดังนั้นถ้าลองสรุปเรื่องของการ Authentication
+1. Imported Cluster เราก็ใช้ kubeconfig ที่มีอยู่แล้วต่อไปใช้งานได้เลยไม่มีปัญหาใดๆ 
+2. Hosted By Cloud Provider ถ้าอยากจะใช้งานเราก็ใช้คำสั่งผ่าน commandline ก็ได้แล้วเช่น az aks get-credentials สำหรับ azure ก็จะได้ kubeconfig มาใช้
+3. สร้างใหม่หมดเลยด้วย Rancher เองก็สามารถทำการใช้ User ที่ Generate ใหม่ผ่าน Rancher
+
+ดังนั้นแล้ว Rancher ก็เหมือนส่วนเสริมในการทำ Authentication นั่นเองใครมีอะไรอยู่แล้วก็ใช้ได้เลยส่วนถ้าอยากจะทำ Authentication สร้าง User เพิ่มก็มาเพิ่มที่ Rancher ได้เช่นกัน
 
 
 
