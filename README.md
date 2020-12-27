@@ -442,9 +442,72 @@ metadata:
 ![alt Cluster Explorer](images/cluster-explorer/yaml%20node.png)
 
 ### ทดลองเปลี่ยน Role ของ Node ผ่านการแก้ไข Declarative YAML
+เราจะลองไปแก้ไข clsuter.yaml กันซึ่งเป็น manifest แห่งความจริงว่า cluster ของเรานั้นมีสถานะเป็นอย่างไร (การแก้ไขเกี่ยวกับ cluster จะแก้ผ่านไฟล์นี้เท่านั้น) เราจะแก้ role จาก controlplane ให้เป็น worker และใช้คำสั่ง rke up ในการเปลี่ยน state ของ cluster
+![alt Cluster Explorer](images/cluster-explorer/change%20role.png)
 
+```
+[linxianer12@fedora certified-rancher-operator]$ rke up
+
+INFO[0000] Running RKE version: v1.0.14                 
+INFO[0000] Initiating Kubernetes cluster                
+INFO[0000] [certificates] Generating Kubernetes API server certificates 
+INFO[0000] [certificates] Generating admin certificates and kubeconfig 
+INFO[0000] Successfully Deployed state file at [./cluster.rkestate] 
+INFO[0000] Building Kubernetes cluster                  
+INFO[0000] [dialer] Setup tunnel for host [192.168.122.242] 
+INFO[0000] [dialer] Setup tunnel for host [192.168.122.216] 
+INFO[0000] [dialer] Setup tunnel for host [192.168.122.27] 
+INFO[0001] [network] Deploying port listener containers 
+INFO[0001] Image [rancher/rke-tools:v0.1.66] exists on host [192.168.122.27] 
+INFO[0001] Image [rancher/rke-tools:v0.1.66] exists on host [192.168.122.216] 
+INFO[0001] Starting container [rke-etcd-port-listener] on host [192.168.122.27], try #1 
+```
+เมื่อเรากลับเข้ามาดูที่ Dashboard อีกครั้งหนึ่งเราจะพบว่า Cluster Explorer นั้นเห็น resource ใหม่ที่เพิ่มขึ้นมาแล้วคือ Host อีกเครื่องหนึ่งจึงมี Resource เพิ่มขึ้นจาก Memory 4GB กลายเป็น 8GB นั่นเองและจำนวน Pod ก็เพิ่มขึ้นจาก 110 Pod กลายเป็น 220 Pod 
+![alt Merged Node to Cluster](images/cluster-explorer/merge%20worker%20node.png)
 
 # Backup Snapshot
+ในส่วนต่อมาเราจะทดลองใช้ Feature การ Backup ETCD Database เอาไว้เพื่อว่าเรา Cluster ของเรานั้นมีปัญหาจะได้สามารถกู้ State ของ Cluster กลับมาได้ (เป็นแค่การ Backup State ของ Cluster นะแต่ไมไ่ด้ Backup Persistent Volume ของ Cluster แต่อย่างใด)
+ซึ่งข้อมูลที่เก็บใน ETCD ก็เป็น Object ของ Kubernetes ที่บอกว่า Node นี้มี Pod อะไรบ้าง หรือ User ต่างๆการทำ RBAC ก็จะถูกเก็บใน ETCD ด้วยเช่นกันดังนั้นตัวอย่างเราจะทำการทดลองสร้าง User ขึ้นมาใหม่และ Deployment เว็บเกมเลี้ยงไข่ไดโนเสาร์
+จากนั้นเราจะจำลองเหตุการณ์มือลั่น เผลอไปลบ Deployment เว็บไซต์นั้น และลบ User ออกจากระบบ แต่เราจะกู้ State ของ Cluster กลับมาด้วยการใช้ rke commandline
+```
+Deployment
+container Image: linxianer12/frontend-dino
+label:  app=frontend-dino
+port: 3000
+
+Service NodePort
+port: 3000  # Port ที่ใช้เรียกภายใน Cluster Kubernetes
+targetPort: 3000  # ชี้ไปหา port 3000 ของ pod ที่ต้องการ
+nodePort: xxxxx # High Port ที่แรนด้อมเปิดให้ Access จากข้างนอกมายัง Pod ใน Cluster ได้
+selector: app=frontend-dino
+externalIp= IP ของ VM ใน Cluster
+```
+เราจะไปที่ Deployment Section และกดปุ่ม Create เพื่อทำการสร้าง Template การ Deploy ผ่าน commandline
+![alt Deploy Open Online Testing System](images/cluster-explorer/deploy%20open%20online%20testing%20system.png)
+
+
+
+### ผลลัพธ์การ Setup Application และ Service
+
+```
+[linxianer12@fedora ~]$ kubectl get pod -o wide
+NAME                            READY   STATUS    RESTARTS   AGE    IP             NODE          NOMINATED NODE   READINESS GATES
+apache-7bdd496cfd-5cwjz         1/1     Running   4          2d1h   10.42.73.187   kube-worker   <none>           <none>
+frontend-dino-bc7b7485c-9ndb8   1/1     Running   0          36m    10.42.73.188   kube-worker   <none>           <none>
+nginx-6d8c56b84c-bhf4r          1/1     Running   4          2d1h   10.42.73.182   kube-worker   <none>           <none>
+nginx-6d8c56b84c-hwhw5          1/1     Running   4          2d1h   10.42.73.178   kube-worker   <none>           <none>
+nginx-6d8c56b84c-k2vrg          1/1     Running   4          2d1h   10.42.73.174   kube-worker   <none>           <none>
+nginx-6d8c56b84c-s96fx          1/1     Running   4          2d1h   10.42.73.180   kube-worker   <none>           <none>
+
+[linxianer12@fedora ~]$ kubectl get svc -o wide
+NAME                    TYPE        CLUSTER-IP      EXTERNAL-IP       PORT(S)          AGE    SELECTOR
+apache                  ClusterIP   None            <none>            42/TCP           2d1h   workload.user.cattle.io/workloadselector=deployment-default-apache
+frontend-dino-service   NodePort    10.43.247.220   192.168.122.242   3000:30835/TCP   12m    app=frontend-dino
+kubernetes              ClusterIP   10.43.0.1       <none>            443/TCP          2d6h   <none>
+```
+
+
+
 ตอน Snapshot Restore ระบบจะ Down ลงไปสักพักนึงอย่างที่เราเทสกันเพราะว่ามัน restore ETCD 
 ```
 rke etcd snapshot-save --name [ชื่อ] vanila-system  # ไฟล์จะถูกเก็บใน /opt/rke/etcd-snapshots เวลา restore ให้ระบุชื่อไฟล์นั้นลงไป

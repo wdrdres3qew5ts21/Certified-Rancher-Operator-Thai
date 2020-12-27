@@ -20,7 +20,7 @@ nodes:
   port: "22"
   internal_address: ""
   role:
-  - controlplane
+  - worker
   - etcd
   hostname_override: kube-master
   user: ubuntu
