@@ -209,36 +209,46 @@ rke up
 ```
 
 # ผลลัพธ์
-หลังจากที่เราทำการสร้าง Cluster สำเร็จแล้วเราจะได้ไฟล์มาสำคัญมากๆมาสองไฟล์นั้นก็คือ cluster.rkestate ซึ่งใช้ในการเก็บ key access ทั้งอย่างของ kubernetes cluster ซึ่งปกติแล้วจะถูกเก้บอยู่ใน /etc/kubernetes/pki [Kubernetes PKI](https://kubernetes.io/docs/setup/best-practices/certificates/) แต่ด้วยการที่ทุกอย่างเป็น Docker แล้วการ Backup ก็เลยมาอยู่ในไฟล์นี้แทนนั่นเอง ซึ่งไฟล์นี้ห้ามหายเด็ดขาดต้องบันทึกเอาไว้ตลออดไม่อย่างนั้นจะไม่สามารถไปทำการสร้าง Node ใหม่มา Join อะไรได้แล้วเพราะว่ามันขาด Key สำคัญในการทำ Signing Certificate ไปนั่นเอง
+หลังจากที่เราทำการสร้าง Cluster สำเร็จแล้วเราจะได้ไฟล์มาสำคัญมากๆมาสองไฟล์นั้นก็คือ cluster.rkestate ซึ่งใช้ในการเก็บ key access ทั้งอย่างของ kubernetes cluster ซึ่งปกติแล้วจะถูกเก้บอยู่ใน /etc/kubernetes/pki [Kubernetes PKI](https://kubernetes.io/docs/setup/best-practices/certificates/) แต่ด้วยการที่ทุกอย่างเป็น Docker แล้วการ Backup ก็เลยมาอยู่ในไฟล์นี้แทนนั่นเอง ซึ่งไฟล์นี้ห้ามหายเด็ดขาดต้องบันทึกเอาไว้ตลออดไม่อย่างนั้นจะไม่สามารถไปทำการสร้าง Node ใหม่มา Join อะไรได้แล้วเพราะว่ามันขาด Key สำคัญในการทำ Signing Certificate ไปนั่นเอง (รวมไปถึงการทำ Authentication) 
+และอีกไฟลืหนึ่งที่ได้มาจะเป็นไฟล์ kube_config_cluster.yaml ซึ่งภายในก็จะมี token สำหรับใช้ authenticatino กับ kube-apiserver ผ่าน kubectl นั่นเองซึ่งเราจะต้องนำข้อมูลในไฟล์นี้ไปเซ็ทใน ~/.kube/config ภายใน laptop ของเราหรือจะเซ็ทเป็น environment variable ก็ได้ขอเพียงแค่เราเก็บไฟล์นี้เอาไว้นั่นเอง
 
-
-
-### Generate Certificate สำหรับ Self Signed
+# ทดสอบการใช้งาน Kuberentes Cluster
+ส่วนตัวแล้วผมไม่ชอบการเติม flags argument แบบ --kubeconfig ใน terminal เพราะมักจะลืมเติมทุกทีหรือจะเป็น environment variable ก็รู้สึกไม่สะดวกชอบแบบสามารถสลับ contexts ไปมาได้มากกว่าเเพราะชัดเจนและเห็นภาพรวมทั้งหมดดังนั้นผมจะ copy ข้อมูลไปไปแปะใน ~/.kube/config ซึ่งเป็น default directory ของ kubernetes ในการ load config ไฟล์มาใช้
+concepts ของ contexts คือการ mapping ระหว่าง user ที่จะไปใช้งานยัง cluster นั้นๆดังนั้นแล้วให้เรา copy ข้อมูลจาก array cluster, user และ contexts ไปแปะใน config ของเราเพิ่ม เพียงเท่านี้เราก็จะสามารถใช้งานได้แล้ว (เราสามารถ rename ชื่อ cluster, contexts เป็นอะไรก็ได้ที่เราชอบเพื่อความเข้าใจง่าย)
 ```
-openssl genrsa -out rke.pem 2048
-openssl rsa -in rke.pem -pubout -out rke.crt
+kubectl config get-contexts # คำสั่งในการดู contexts ทั้งหมดที่เรามีภายใน kubeconfig
 
-Name                    State             IPv4             Image
-kube-master             Running           192.168.122.27   Ubuntu 20.04 LTS
-kube-worker             Running           192.168.122.242  Ubuntu 20.04 LTS
-rancher-host            Running           192.168.122.216  Ubuntu 20.04 LTS
+CURRENT   NAME                 CLUSTER          AUTHINFO                                       NAMESPACE
+          docker-desktop       docker-desktop   docker-desktop                                 
+          docker-for-desktop   docker-desktop   docker-desktop                                 
+          istio-demo           istio-demo       istio-demo                                     
+          kube-devops          kube-devops      clusterUser_Elasticsearch-Stack_kube-devops    
+          kube-devops-admin    kube-devops      clusterAdmin_Elasticsearch-Stack_kube-devops   
+*         kubeadm              kubeadm          kubernetes-admin                               
+          rke                  rke              kube-admin-local 
+```
+จะเห็นว่าปัจจุบันเครื่องเหมาย asterisk * นั้นแสดงว่าเรากำลังใช้งาน contexts ใดซึ่งเราก็สามารถทำการสลับ context ได้จากการใช้คำสั่ง use-context ไปยัง rke clsuter ที่เราสร้างขึ้น (ผมแก้ contexts กับ cluster name ภายใน kube_config_cluster.yaml ให้ชื่อ rke จากเดิมที่ชื่อ kube-admin-local)
+```
+[linxianer12@fedora certified-rancher-operator]$ kubectl config use-context rke
+
+Switched to context "rke".
+[linxianer12@fedora certified-rancher-operator]$ kubectl config get-contexts
+CURRENT   NAME                 CLUSTER          AUTHINFO                                       NAMESPACE
+          docker-desktop       docker-desktop   docker-desktop                                 
+          docker-for-desktop   docker-desktop   docker-desktop                                 
+          istio-demo           istio-demo       istio-demo                                     
+          kube-devops          kube-devops      clusterUser_Elasticsearch-Stack_kube-devops    
+          kube-devops-admin    kube-devops      clusterAdmin_Elasticsearch-Stack_kube-devops   
+          kubeadm              kubeadm          kubernetes-admin                               
+*         rke                  rke              kube-admin-local        
+                       
+[linxianer12@fedora certified-rancher-operator]$ kubectl config current-context
+rke
+
 ```
 
-ssh-keygen
-copy public key ไฟล์ไปวางที่ .ssh/authorized_keys 
-
-
-# Prerequisite
-Set up the Rancher server’s local Kubernetes cluster.
-
-The cluster requirements depend on the Rancher version:
-1. As of Rancher v2.5, Rancher can be installed on any Kubernetes cluster. This cluster can use upstream Kubernetes, or it can use one of Rancher’s Kubernetes distributions, or it can be a managed Kubernetes cluster from a provider such as Amazon EKS. > Note: To deploy Rancher v2.5 on a hosted Kubernetes cluster such as EKS, GKE, or AKS, you should deploy a compatible Ingress controller first to configure SSL termination on Rancher..
-2. In Rancher v2.4.x, Rancher needs to be installed on a K3s Kubernetes cluster or an RKE Kubernetes cluster.
-3. In Rancher prior to v2.4, Rancher needs to be installed on an RKE Kubernetes cluster.
-
-
-
-# Install Rancher
+# ติดตั้ง Rancher ไปยัง RKE Cluster
+ตอนนี้
 ```
 kubectl create namespace cert-manager
 helm repo add jetstack https://charts.jetstack.io
