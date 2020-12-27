@@ -482,8 +482,21 @@ nodePort: xxxxx # High Port ที่แรนด้อมเปิดให้ 
 selector: app=frontend-dino
 externalIp= IP ของ VM ใน Cluster
 ```
-เราจะไปที่ Deployment Section และกดปุ่ม Create เพื่อทำการสร้าง Template การ Deploy ผ่าน commandline
-![alt Deploy Open Online Testing System](images/cluster-explorer/deploy%20open%20online%20testing%20system.png)
+เราจะไปที่ Deployment Section และกดปุ่ม Create เพื่อทำการสร้าง Template การ Deploy ผ่าน GUI ซึ่งก็จะเป็น Template เหมือนกับเวลาที่เราสร้างผ่าน kubectl create deployment --image  -oyaml นั่นเอง เพียงแต่ตอนนี้เราจะสามารถให้ Kubernetes ของเราใช้งานได้ง่ายสะดวกกับทุกๆคนเพียงใช้งานผ่าน GUI ได้เลยจากนั้นการปรับตัวไปใช้ command line ก็จะทำได้ง่ายขึ้นเพราะเห็นภาพรวมมารวมพอแปลงเป็นคำสั่ง CLI ปุ๊ป ก็จะเห็นภาพว่าแต่ล่ะอย่าง mapping กันได้อย่างไรนั่นเอง
+
+![alt Deploy Open Online Testing System](images/cluster-explorer/deploy-1.png)
+
+![alt Deploy Open Online Testing System](images/cluster-explorer/deploy-2.png)
+
+หลังจากที่เรา Deploy Application ไปแล้วเราก็จะทำการเปิด Service ใน Kubernetes ให้สามารถ Access ได้จากภายนอกเข้ามายัง Cluster ของเราผ่าน Service NodePort ซึ่งถ้าใครยังสับสนเรื่องของ Kubernetes Service สามารถไปอ่านได้ที่ [alt สรุปเรื่อง Kubernetes Services บน GKE หลังศึกษาและทดลองอย่างเอาจริงเอาจัง](https://www.spicydog.org/blog/my-summary-on-gke-services/)
+โดยเราจะทำการเปิด NodePort ไปยัง Application ของเราผ่าน selector ที่เหมือนกันคือ app=frontend-dino
+![alt Deploy Open Online Testing System](images/cluster-explorer/service1.png)
+
+![alt Deploy Open Online Testing System](images/cluster-explorer/service2.png)
+
+![alt Deploy Open Online Testing System](images/cluster-explorer/service3.png)
+
+![alt Deploy Open Online Testing System](images/cluster-explorer/service4.png)
 
 
 
