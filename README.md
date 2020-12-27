@@ -121,6 +121,7 @@ Memory usage:   838.5M out of 3.8G
 สถาปัตยกรรมของ Rancher นั้นจะเรียกได้ว่าช่วย Abstract ความซับซ้อนของ Docker ก็ว่าได้เพราะว่าทุกอย่างนั้นล้วนเป็น Container Image หมดแล้วของเพียงแค่ Pull ลงมาก็จะพร้อมใช้งานได้เลยซึ่งหมายความว่าขั้นตอนการติดตั้งปกติอย่าง kubelet ที่ปกติจะต้องทำงานด้วย Systemd ก็จะไม่ต้องลงแล้วแต่จะลงเป็น Container ของ Docker หมดเลย (ตรงจุดนี้มีความน่าสนใจอย่างยิ่งว่าการที่ทุกๆ Component อยู่ใน Container แล้วดีจริงหรือไม่) ซึ่งจะต่างจาก Kubernetes จริงๆซึ่ง "kubelet จำเป็นต้องลงเป็น systemd service" เพราะว่า kubelet เป็นส่วนที่ใช้ในการ Controll Pod สถานะรวมถึง Event ต่างๆที่เกิดขึ้นใน Kubernetes Node นั้นๆ (kubelet เจ๊งเท่ากับไม่สามารถควบคุมการสร้าง pod/ delete pod ได้) ซึ่ง kubelet ยังมีมากกว่านั้นอีกไม่ว่าจะเป็นเรื่องของการกำหนด flag ของ CoreDNS, Container Network Interface ซึ่งสามารถตามไปอ่านได้ที่ Repository ของอาจารย์จุ๊บกับ Kubernetes Hardway
 [Kubernetes Hardway ไทย](https://github.com/rdamrong/Kubernetes-The-Hard-Way-CentOS/blob/master/docs/10-install-worker-node.md)
 ```
+# รันคำสั่งนี้ในทุก Host Virtual Machine ที่เราสร้างขึ้นมาจะทำเป็น shell script วน loop เอาก็ได้นะ
 
 sudo apt-get update -y && sudo apt-get install docker.io -y && sudo systemctl start docker && sudo systemctl enable docker &&sudo usermod -aG docker $USER 
 
@@ -139,7 +140,7 @@ sudo apt-get update -y && sudo apt-get install docker.io -y && sudo systemctl st
 
 # Rancher Architecture
 ![alt txt](images/rancher-architecture-rancher-api-server.svg)
-หลังจากที่เราได้ทราบไปแล้วว่า Rancher นั้นเป็น Kubernetes Management Platform ซึ่งช่วยสนับสนุนตามคุณสมบัติต่างๆดั่งที่กล่าวไปทั้ง 3 ข้อจุดเด่นๆ แต่ในปัจจุบัน Rancher นั้นไม่ได้เป็นเพียงแค่ GUI ที่ใช้ในการ Deploy อีกต่อไปแล้วแต่ว่า Rancher Labs ซึ่งเป็นเจ้าของผลิตภันฑ์นั้นยังมี Kubernetes Distribution เป็นของตัวเองนั่นคือ Rancher Kubernetes Engine (RKE) ซึ่งใช้ในการ Host Rancher Pod ใน Cluster Kubernetes ซึ่งสมัยก่อนตั้งแต่ Rancher 2.4 หรือลงไปนั้นจะ Support เฉพาะกับ RKE เท่านั้นแต่ในปัจจุบัน Rancher สามารถ Deploy ได้บนทั้ง K3S และ RKE แล้ว 
+หลังจากที่เราได้ทราบไปแล้วว่า Rancher นั้นเป็น Kubernetes Management Platform ซึ่งช่วยสนับสนุนตามคุณสมบัติต่างๆดั่งที่กล่าวไปทั้ง 3 ข้อจุดเด่นๆ แต่ในปัจจุบัน Rancher นั้นไม่ได้เป็นเพียงแค่ GUI ที่ใช้ในการ Deploy อีกต่อไปแล้วแต่ว่า Rancher Labs ซึ่งเป็นเจ้าของผลิตภันฑ์นั้นยังมี Kubernetes Distribution เป็นของตัวเองนั่นคือ Rancher Kubernetes Engine (RKE) ซึ่งใช้ในการ Host Rancher Pod ใน Cluster Kubernetes ซึ่งถ้าใช้ Rancher 2.5 จะสามารถ Deploy ได้บนทุกๆ Kubernetes Distribution แต่ถ้าตั้งแต่ Version 2.4 ลงไปนั้นจะใช้ได้แค่กับ RKE Cluster เท่านั้น
 สำหรับ Architecture ของ Rancher Cluster นั้นก็จะประกอบไปด้วย Upstream และ Downstream ถ้าให้มองเข้าใจอย่างง่ายๆ Upstream คือส่วนที่ใช้ในการ Manage ส่วน Downstream คือ Cluster ปลายทางขาล่างที่ถูกควบคุมอีกทีดู Rancher Cluster นั่นเอง วึ่งใน Cluster ปลายทางก็จะต้องมี Cluster Agent ลงเอาไว้เพื่อทำการติดต่อกับ Cluster Controller ว่าสถานะตอนนี้ Cluster เป็นอย่างไรบ้างมีจำนวน Pod หรือ Configuration เป็นไปตามที่ Upstream สั่งคำสั่งมาแล้วหรือยัง ซึ่งแต่ล่ะ Node เองก็จะยังมี Node Agent เป็นของตัวเองด้วยเพื่อดูสถานะของ Node แต่การที่จะทำเรื่องของ Downstream Cluster ที่ Rancher ไป Manage ควบคุมได้เต็มๆที่จุดสำคัญที่ต้องเน้นย้ำก็คือ
 ### ประเภทการ Provisioning
 1. Rancher สร้าง Kubernetes RKE ผ่าน Rancher เองเราสามารถควบคุม Life Cycle & Backup Restore Database ETCD ได้ทั้งหมด ซึ่งนั่นก็เป็นเพราะว่า Rancher สามารถ Access Control Plane ของ Kubernetes ได้ตรงๆ (เพราะว่า Rancher เป็นคน Provisioning VM ขึ้นมาด้วยตัวเอง) จึงสามารถเข้าถึง ETCD Database, Rotate Certificate ซึ่งความสามารถนี้เกิดขึ้นได้เพราะ Rancher เป็นคนสร้างเองทุกอย่างเสมือนมีคำสั่ง kubeadm ถือติดตัวเอาไว้แล้วเข้าไป Access ได้ทุกอย่าง
@@ -167,7 +168,48 @@ sudo apt-get update -y && sudo apt-get install docker.io -y && sudo systemctl st
 
 ดังนั้นแล้ว Rancher ก็เหมือนส่วนเสริมในการทำ Authentication นั่นเองใครมีอะไรอยู่แล้วก็ใช้ได้เลยส่วนถ้าอยากจะทำ Authentication สร้าง User เพิ่มก็มาเพิ่มที่ Rancher ได้เช่นกัน
 
+# เริ่ม Config Cluster
+rke config นั้นช่วยให้เราสามารถสร้าง manifest ของ  rke cluster ได้อย่าง่ายได้และนำมาแก้ไขทีหลังได้ซึ่งข้อมูลที่จะให้ใส่ก็คือเสมือนกับตอนที่เราติดตั้ง kubernetes cluster ใน kubeadm ก็คือการเลือกตั้งแต่ solution container network การกำหนด DNS พื้นฐานที่จะเชื่อมกับ Core DNS หรือถามว่า Node นี้เป็น Control Plane หรือเปล่า เพียงแต่ว่า RKE นั้นมีคำสั่ง Template มาให้แล้วแยกระหว่าง Control Plane, ETCD และ Wroker Node นั่นเอง โดยจะเห็นว่าคำสั่งของ RKE นั้นจะยึดกับ Docker เป็นหลักซึ่งจากที่รองใช้ Podman มานั้นพบว่ายังไม่รองรับและก็ไม่มี Official Support สำหรับ Container Runtime ชนิดอื่น [อ้างอิง github issues](https://github.com/rancher/rancher/issues/20544)
+หลังจากที่เรารันคำสั่งีน้ไปแล้วเราจะได้ไฟล์ cluster.yaml มาซึ่งเป็น manifest ของ cluster kubernetes ทั้งหมดว่าถูก config ด้วอยะไรบ้างซึ่งถ้าหากเราต้องการสร้างหรือเพิ่ม Node ใหม่ขึ้นมาอีกก็มาเติมที่ไฟล์ cluster.yaml นี้ได้เลยแล้วเวลาใช้คำสั่งสร้าง cluster ตัว rke ก็จะเช็คสถานะทั้งหมดก็นั่นเอง
+```
+rke config  # คำสั่งเพื่อ Generate Declarative Config ของ Kubernetes RKE Cluster 
 
+[+] Cluster Level SSH Private Key Path [~/.ssh/id_rsa]:    
+[+] Number of Hosts [1]: 1
+[+] SSH Address of host (1) [none]: 
+[+] SSH Port of host (1) [22]: 
+[+] SSH Private Key Path of host () [none]: 
+[-] You have entered empty SSH key path, trying fetch from SSH key parameter
+[+] SSH Private Key of host () [none]: 
+[-] You have entered empty SSH key, defaulting to cluster level SSH key: ~/.ssh/id_rsa
+[+] SSH User of host () [ubuntu]: 
+[+] Is host () a Control Plane host (y/n)? [y]: y
+[+] Is host () a Worker host (y/n)? [n]: y
+[+] Is host () an etcd host (y/n)? [n]: y
+[+] Override Hostname of host () [none]: cluster-thai
+[+] Internal IP of host () [none]: 
+[+] Docker socket path on host () [/var/run/docker.sock]: 
+[+] Network Plugin Type (flannel, calico, weave, canal) [canal]:  
+[+] Authentication Strategy [x509]: 
+[+] Authorization Mode (rbac, none) [rbac]: 
+[+] Kubernetes Docker image [rancher/hyperkube:v1.17.14-rancher1]: 
+[+] Cluster domain [cluster.local]: 
+[+] Service Cluster IP Range [10.43.0.0/16]: 
+[+] Enable PodSecurityPolicy [n]: 
+[+] Cluster Network CIDR [10.42.0.0/16]: 
+[+] Cluster DNS Service IP [10.43.0.10]: 
+[+] Add addon manifest URLs or YAML files [no]: 
+
+```
+
+# สร้าง Cluster
+เราจะใช้คำสั่ง rke up เพื่อทำการสร้าง cluster จริงๆโดยอย่างที่บอกก็คือถ้าเราไม่ได้ตั้งค่า SSH Key ตั้งแต่ตอนแรกตัว rke binary เราก็จะไม่สามารถไปรัน automation template ในการติดตั้งให้ได้นั่นเอง และอย่าลืมว่าทุกคเรื่องต้องมี Docker พร้อมใช้งานแล้วด้วยนะ (start service + add user ไปใน group docker) ซึ่งบางครั้งแล้วถ้าเกิดเรามี Memoery เครื่องหรือ CPU ต่ำไปอาจจะเกิด Delay ระหว่างการที่ container image ของ Kubernetes เริ่มทำงานอยู๋แล้วเกิด timeout ได้ก้ไม่ต้องตกใจให้เราใช้คำสั่ง rke up ซ้ำอีกรอบ
+```
+rke up
+```
+
+# ผลลัพธ์
+หลังจากที่เราทำการสร้าง Cluster สำเร็จแล้วเราจะได้ไฟล์มาสำคัญมากๆมาสองไฟล์นั้นก็คือ cluster.rkestate ซึ่งใช้ในการเก็บ key access ทั้งอย่างของ kubernetes cluster ซึ่งปกติแล้วจะถูกเก้บอยู่ใน /etc/kubernetes/pki [Kubernetes PKI](https://kubernetes.io/docs/setup/best-practices/certificates/) แต่ด้วยการที่ทุกอย่างเป็น Docker แล้วการ Backup ก็เลยมาอยู่ในไฟล์นี้แทนนั่นเอง ซึ่งไฟล์นี้ห้ามหายเด็ดขาดต้องบันทึกเอาไว้ตลออดไม่อย่างนั้นจะไม่สามารถไปทำการสร้าง Node ใหม่มา Join อะไรได้แล้วเพราะว่ามันขาด Key สำคัญในการทำ Signing Certificate ไปนั่นเอง
 
 
 
