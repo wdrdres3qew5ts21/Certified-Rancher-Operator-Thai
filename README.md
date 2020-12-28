@@ -529,9 +529,6 @@ kubernetes              ClusterIP   10.43.0.1       <none>            443/TCP   
 เราจะทดลองเข้าไปดูที่ Application เกมเลี้ยงไข่ไดโนเสาร์ของเราที่ IP 192.168.122.242 ซึ่ง mapping เข้ากับ nodePort 30835 สำหรับรับ Traffic จากภายนอก Cluster เข้ามา
 ![alt Result SIT Dino](images/cluster-explorer/app%20result.png) 
 
-ซึ่งเกมเลี้ยงไข่ไดโนเสาร์ของเรานั้นก็มีประวัติคือ [alt มาทดลอง SIT Dino มาสร้างเกมบนมือถือกันเถอะ](https://alchemist.itbangmod.in.th/orientation2018-dev-game-5e5472cd4d36)
-
-
 ### เริ่มการ Backup ETCD State ก่อนเกิด Disaster
 เราจะใช้คำสั่ง rke ในการทำ snapshot ผ่านคำสั่งดั่งนี้ ซึ่งการ Backup นั้นสามารถแนบ key เพื่ออัพโหลด snapshot ขึ้นไปที่ AWS S3 Storage ก็ได้ด้วยเช่นกัน 
 ```
@@ -1057,6 +1054,7 @@ roleTemplateName: services-view
 userName: u-94jh2
 userPrincipalName: local://u-94jh2
 ```
+##### สร้าง Condition แสดง Role ที่เกี่ยวข้องกับผู้ใช้
 จะเห็นว่าเราต้องการจะ Filter แสดงเฉพาะผลลัพธ์ของ userName: u-94jh2 (Naomi Lin) เราก็จะใช้ kubectl jsonpath แล้วตั้ง Condition ว่าถ้า userName == "u-94jh2" จะให้แสดง roleTemplateName ของผู้ใช้คนนั้นออกมา
 โดน Syntax เป็นการใช้ .items[?(@.CONDITION_FIELDS=="")].DISPLAY_FIELD
 โดยเงื่อนไขของเราคือ [อ้างอิง JSON Path Kubectl](https://kubernetes.io/docs/reference/kubectl/jsonpath/)
@@ -1070,8 +1068,20 @@ userPrincipalName: local://u-94jh2
 ```
 kubectl get projectroletemplatebindings   -ojsonpath='{.items[?(@.userName=="u-94jh2")].roleTemplateName}' -A ;echo
 
+# ผลลัพธ์ของ Role ทั้งหมดใน user: u-94jh2 (Naomi Lin)
+
 services-view workloads-view projectroletemplatebindings-view projectcatalogs-view
 ```
+ซึ่งหลังจากที่ลองไปดู Code เบื้องหลังของ Rancher มาก็เข้าใจว่า Rancher ใช้ตัวแปรเหล่าน้ในการกำหนดสิทธิต่างๆนี่แหละเป็น Static Value ไป
+![alt Authentication Static Value](images/resource-quota/set-quota/7.authen-code.png)
+
+[Soure Code Authentication บน Manager ใน Rancher บน Github](https://github.com/rancher/rancher/blob/master/pkg/controllers/management/auth/manager.go)
+![alt Authentication Static Value](images/resource-quota/set-quota/8.sourcecode-role.png)
+[Soure Code Role ใน Rancher บน Github](https://github.com/rancher/rancher/blob/0257d0faee6ac32d087b7dae76834c016426cb50/pkg/data/management/role_data.go)
+
+
+### ทดสอบ User ที่สร้างขึ้นมาใหม่
+
 
 
 # Ingress
