@@ -1,0 +1,85 @@
+apiVersion: v1
+items:
+- apiVersion: v1
+  kind: Service
+  metadata:
+    annotations:
+      field.cattle.io/publicEndpoints: '[{"addresses":["10.34.196.181"],"port":31944,"protocol":"TCP","serviceName":"default:frontend-dino-service","allNodes":true}]'
+    creationTimestamp: "2020-12-28T06:45:56Z"
+    name: frontend-dino-service
+    namespace: default
+    resourceVersion: "12194"
+    selfLink: /api/v1/namespaces/default/services/frontend-dino-service
+    uid: 7e0c3aa5-edf0-4141-ae95-199449a1ab55
+  spec:
+    clusterIP: 10.43.14.25
+    externalIPs:
+    - 10.34.196.215
+    externalTrafficPolicy: Cluster
+    ports:
+    - nodePort: 31944
+      port: 3000
+      protocol: TCP
+      targetPort: 3000
+    selector:
+      app: frontend-dino
+    sessionAffinity: None
+    type: NodePort
+  status:
+    loadBalancer: {}
+- apiVersion: v1
+  kind: Service
+  metadata:
+    creationTimestamp: "2020-12-28T06:09:33Z"
+    labels:
+      component: apiserver
+      provider: kubernetes
+    name: kubernetes
+    namespace: default
+    resourceVersion: "144"
+    selfLink: /api/v1/namespaces/default/services/kubernetes
+    uid: 850b31c0-65eb-4132-9996-3a13b5cc14bf
+  spec:
+    clusterIP: 10.43.0.1
+    ports:
+    - name: https
+      port: 443
+      protocol: TCP
+      targetPort: 6443
+    sessionAffinity: None
+    type: ClusterIP
+  status:
+    loadBalancer: {}
+- apiVersion: v1
+  kind: Service
+  metadata:
+    annotations:
+      field.cattle.io/publicEndpoints: '[{"addresses":["10.34.196.181"],"port":32629,"protocol":"TCP","serviceName":"default:webserver","allNodes":true}]'
+    creationTimestamp: "2020-12-28T06:51:07Z"
+    labels:
+      app: webserver
+    name: webserver
+    namespace: default
+    resourceVersion: "13900"
+    selfLink: /api/v1/namespaces/default/services/webserver
+    uid: 66083955-7c12-40fb-905c-8c43fcb8a965
+  spec:
+    clusterIP: 10.43.117.115
+    externalIPs:
+    - 10.34.196.215
+    externalTrafficPolicy: Cluster
+    ports:
+    - nodePort: 32629
+      port: 80
+      protocol: TCP
+      targetPort: 80
+    selector:
+      app: webserver
+    sessionAffinity: None
+    type: NodePort
+  status:
+    loadBalancer: {}
+kind: List
+metadata:
+  resourceVersion: ""
+  selfLink: ""

@@ -322,7 +322,7 @@ helm install \
 
 kubectl create namespace cattle-system
 
-helm install rancher rancher-latest/rancher \
+helm install rancher rancher-stable/rancher \
   --namespace cattle-system \
   --set hostname=rancher.cloudnative
 ```
@@ -549,8 +549,8 @@ deployment.apps "frontend-dino" deleted
 deployment.apps "nginx" deleted
 ```
 ### Restore ETCD Database
-ระหว่างที่เรา Restore Cluster นั้นมีข้อเสียนิดหน่อยก็คือ Cluster จะเกิด Downtime ลงไปสักพักหนึ่งเพราะว่า ETCD จำเป็นต้อง Sync ให้ทุกๆอย่างใน Cluster มีข้อมูลเหมือนกันเห็นเหมือนกัน [alt ETCD KV API การันตีการ Consistency](https://etcd.io/docs/v3.3.12/learning/api_guarantees/) จึงทำให้การ Restore Clsuter จึงเกิด Downtime ลงไปด้วยเพราะ ETCD นั้นถูกหยุดไปสักพัก
-ซึ่งไฟล์ snapshot นั้นจะถูกเก็บไว้ใน host ที่มี ETCD (วึ่งหมายความว่าถ้า Host VM ล่มๆจริงๆมาแล้วเราไม่มี Backup ไปเก็บที่อื่นข้อมูลก็จะหายนะ)
+ระหว่างที่เรา Restore Cluster นั้นมีข้อเสียนิดหน่อยก็คือ Cluster จะเกิด Downtime ลงไปสักพักหนึ่งเพราะว่า ETCD จำเป็นต้อง Sync ให้ทุกๆอย่างใน Cluster มีข้อมูลเหมือนกันเห็นเหมือนกัน [alt ETCD KV API การันตีการ Consistency](https://etcd.io/docs/v3.3.12/learning/api_guarantees/) จึงทำให้การ Restore Clsuter จึงเกิด Downtime ลงไปด้วยเพราะ ETCD นั้นถูกหยุดไปสักพัก (แต่ของที่รันอยู่ Node อื่นก็จะยังทำงานได้นะแค่ kube api-server อาจจะดับไปสักพักหนึ่งรบคำสั่งใหม่ไมไ่ด้)
+ซึ่งไฟล์ snapshot นั้นจะถูกเก็บไว้ใน host ที่มี ETCD (ซึ่งหมายความว่าถ้า Host VM ล่มๆจริงๆมาแล้วเราไม่มี Backup ไปเก็บที่อื่นข้อมูลก็จะหายนะ)
 
 ```
 ubuntu@kube-master:/opt/rke/etcd-snapshots$ ls -al
@@ -591,11 +591,9 @@ INFO[0007] Starting container [etcd-Serve-backup] on host [192.168.122.216], try
 INFO[0007] [etcd] Successfully started [etcd-Serve-backup] container on host [192.168.122.216] 
 ```
 
-
-
 Highlight อยู่ที่ Control Plane
-ถ้าเป็น Hosted Provider ที่ Rancher ไม่ไได้คุม Control Plane ก็จะไม่สามารถทำเรื่องของการ Backup ได้เพราะว่าไมีสามารถ Access Control Plane แต่ทำแบบ Life Cycle Delete ให้อะไรได้แบบนี้ (เพราะมี API KEY Cloud )
-ถ้าเป็น Import ก็คือไม่สามารถทได้ทั้ง Life Cycle และการ Backup แต่ทำได้แค่เรื่องของการ Deploy อย่างเดียวนั่นเอง เพราะว่าไม่มี Key Cloud และก็คุม Control Plane ไมไ่ด้ด้วย
+ถ้าเป็น Hosted Provider ที่ Rancher ไม่ได้คุม Control Plane ก็จะไม่สามารถทำเรื่องของการ Backup ได้เพราะว่าไมีสามารถ Access Control Plane แต่ทำแบบ Life Cycle Delete ให้อะไรได้แบบนี้ (เพราะมี API KEY Cloud )
+ถ้าเป็น Import ก็คือไม่สามารถทได้ทั้ง Life Cycle และการ Backup แต่ทำได้แค่เรื่องของการ Deploy อย่างเดียวนั่นเอง เพราะว่าไม่มี Key Cloud และก็คุม Control Plane ไมไ่ด้ด้วย (เหมือนที่ได้บอกประเภทของ Host ที่ Rancher Manage ตอนแรกครับ)
 
 Window สามารถทำเป็น Worker ได้แต่ถ้า Etcd/ Control Plane ต้อง Linux เท่านั้น
 
@@ -765,11 +763,83 @@ ubuntu@kube-worker:~$ docker network inspect 23b
 ]   
 
 ```
+# Catalog สร้าง Application ที่พร้อมใช้งานจาก Helm Chart
+ใน Rancher นั้นจะมี Catalog ที่ใช้ในการ input parameter ไปยัง Helm Chart ได้รวมไปถึงการดึง Chart จาก Repository ได้อีกด้วยทำให้เราสามารถ Deploy Helm ได้อย่างง่ายดายโดยเฉพาะการ override values.yaml ก็สามารถทำผ่าน GUI ได้เลยเช่นกันเพราะ Rancher Catalog ก็จะไป detect ว่า parameter ที่ใช้ในการ Passing เข้ามานั้นมีอะไรบ้างซึ่งตัวอย่างนี้เราจะลอง Deploy Wordpress จาก Rancher Catalog และเพิ่ม Helm Repository จาก Banzai Cloud ซึ่งเป็นอีก Repository ที่ยอดนิยมในการ Deploy Helm
+```
+Banzai Chart Repository: https://github.com/banzaicloud/banzai-charts
+```
+กดที่ปุ่ม Tools ในหน้า Cluster Management และไปเลือกที่ Catalogs
+![alt Catalog Deploy Helm](images/catalog/1.png)
+เมื่ออยู่ที่หน้า Catalog แล้วไปกดที่ปุ่ม Manage Catalog เพื่อทำการเพิ่ม Catalog หรือลบ Catalog ที่มีอยู่ (แต่ตอนนี้เราต้องการจะเพิ่ม Banzai Chart Repository นั่นเอง)
+![alt Catalog Deploy Helm](images/catalog/1.1.png)
+ถ้าเราไปดูที่ link github ของ Banzai Chart ก็จะพบว่ามีการออกแบบ Structure ของตามที่ Helm ได้กำหนดไว้ซึ่งจริงๆจะไป Host ที่ไหนก็ได้เพียงแต่ส่วนมาก Helm Chart คือ Template ที่เป็น Infrastrucutre Application จึงไม่มีความลับอะไรอยู่แล้วจึงมักจะเปิดเป็น Public กันเพื่อให้คนสามารถนำ Infrastructure Application เหล่านั้นไป Deploy ใช้งานได้เลยทันที
+![alt Catalog Deploy Helm](images/catalog/2.png)
+เพิ่ม Catalog แล้วใส่ URL Banzai Chart ลงไป (เลือกใช้ Helm Version 3)
+```
+Banzai Chart Repository: https://github.com/banzaicloud/banzai-charts
+```
+![alt Catalog Deploy Helm](images/catalog/3.png)
+เราก็จะพบกับ Helm Repository ที่ถูกเพิ่มเข้ามาเป็น Catalog พร้อมใช้งานแล้วนั่นเองซึ่งตัว Rancher จะคอย Fetch เป็น Fix Time เอาไว้ว่าช่วงเวลาไหนจะไปเช็คว่ามี Chart Version ใหม่ขึ้นมาก็จะมาแจ้งเตือนบนหน้า GUI ว่า Chart ที่ deploy เป็น Release นั้นมี Version ใหม่ออกมาแล้วสามารถอัพเกรด Version ขึ้นไปได้นะ
+![alt Catalog Deploy Helm](images/catalog/4.png)
+เมื่อเข้ามาหน้า Catalog ก็จะพบกับตัว Chart ที่พร้อมใช้งานโดยเราจะเลื่อนลงไปข้างล่างเพื่อลองใช้ Wordpress ซึ่งเป็นการติดตั้งที่ง่ายที่สุด
+![alt Catalog Deploy Helm](images/catalog/5.png)
+เลือก Wordpress กำหนด Password/ User และ Service ที่จะใช้ Expose ออกไปซึ่งก้สามารถกรอกผ่าน GUI ได้เลย (เบื้องหลังมันก้คือ values.yaml นั่นเอง)
+![alt Catalog Deploy Helm](images/catalog/wordpress.png)
 
+จากนั้นเราจะทดลองเช็คกันดูว่า Wordpress Deploy ได้สำรเ็จหรือไม่ผ่าน kubectl get deployment -n wordpress
 
-# Project ประกอบไปด้วยหลายๆ Namespace
+```
+[linxianer12@localhost ~]$ kubectl logs -f -n wordpress  wordpress-56c9c66cdf-xbrm7 
+
+Welcome to the Bitnami wordpress container
+Subscribe to project updates by watching https://github.com/bitnami/bitnami-docker-wordpress
+Submit issues and feature requests at https://github.com/bitnami/bitnami-docker-wordpress/issues
+Send us your feedback at containers@bitnami.com
+
+WARN  ==> You set the environment variable ALLOW_EMPTY_PASSWORD=yes. For safety reasons, do not use this flag in a production environment.
+nami    INFO  Initializing apache
+nami    INFO  apache successfully initialized
+nami    INFO  Initializing php
+nami    INFO  php successfully initialized
+nami    INFO  Initializing mysql-client
+nami    INFO  mysql-client successfully initialized
+nami    INFO  Initializing wordpress
+wordpre INFO  ==> Preparing Varnish environment
+wordpre INFO  ==> Preparing Apache environment
+wordpre INFO  ==> Preparing PHP environment
+mysql-c INFO  Trying to connect to MySQL server
+mysql-c INFO  Found MySQL server listening at wordpress-mariadb:3306
+mysql-c INFO  MySQL server listening and working at wordpress-mariadb:3306
+wordpre INFO  Preparing WordPress environment
+wordpre INFO 
+wordpre INFO  ########################################################################
+wordpre INFO   Installation parameters for wordpress:
+wordpre INFO     First Name: FirstName
+wordpre INFO     Last Name: LastName
+wordpre INFO     Username: admin
+wordpre INFO     Password: **********
+wordpre INFO     Email: wdrdres3qew5ts21@gmail.com
+wordpre INFO     Blog Name: User's Blog!
+wordpre INFO     Table Prefix: wp_
+wordpre INFO   (Passwords are not shown for security reasons)
+wordpre INFO  ########################################################################
+wordpre INFO 
+nami    INFO  wordpress successfully initialized
+INFO  ==> Starting gosu... 
+```
+
+# Quota Limit สำหรับ Project
+
+### Project ประกอบไปด้วยหลายๆ Namespace
 1. เราไม่สามารถ move namespace ไปยัง Proejct ที่ถูก set Quota ได้
 2. Notifier Set ที่ระดับ Cluster ว่าจะแจ้งเตือนไปหาใคร 
+
+# User & Authorization
+เราจะทดลองทำการสร้าง user ขึ้นมาผ่าน GUI บน Rancher และลองใช้ command line ในการ Object ใน Namespace ที่เราไม่ได้รับอนุญาตเพื่อพิสูจน์ว่า User นั้นสามารถใช้งานได้จริงและมีเรื่องของจัดการ RBAC ให้เรียบร้อยแล้ว
+
+
+
+
 
 # Ingress
 Annotation ที่สำคัญคือเพราะว่าจะทำให้ Cert Manager มาดูที่ Ingress นี้แล้วสั่งทำ ACME แบบ HTTP01 เพื่อขอ Certificate นั่นเอง
