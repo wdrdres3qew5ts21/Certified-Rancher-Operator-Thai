@@ -80,6 +80,7 @@ multipass get local.driver # เช็ค driver Multipass
 ซึ่งตัวอย่าง module นั้นก็จะมีมากมาย ["Cloud Init Module"](https://cloudinit.readthedocs.io/en/latest/topics/modules.html)
 โดยผมจะเลือกใช้ Module เกี่ยวกับ SSH นั่นก็คือ ssh_publish_hostkeys ในการเพิ่ม Public Key ลงไป
 ส่วน Spec ของ VM ขั้นต่ำจริงๆหลังจากที่ค่อย Tuning มาแล้วก็คือ Memory 4GB ซึ่งจะเป็น Minimum ขั้นต่ำของ Kubernetes ที่ต้องใช้พอดีส่วน Disk จากที่ลองมาน่าจะต้องใช้ประมาณ 12 GB ครับเพราะจากที่ลอง 8GB เหมือนจะน้อยไปและถ้า disk ใช้พื้นที่ไปมากกว่า Threshhold ที่ Kubelet (รู้สึกจะ 85%) ตั้งไว้ก็จะโดน DiskPressure Trigger และ Taint ขึ้นมาทำให้เครื่องที่สร้างมาทำอะไรไมไ่ด้เลยซึ่ง Default Disk นั้นคือ 5GB แต่เวลาติดตั้งและ pull Image อะไรเสร็จทั้งหมดจะใช้ประมาณ 6 - 7 Gb ปลายๆ และสุดท้ายก็ให้ Virtual CPU สัก 2 Core  
+*** สามารถสร้างเครื่องได้ผ่าน script initVirtualMachine.sh
 ```
 multipass launch ubuntu -n rancher-host -m 4G -d 12G -c 2   --cloud-init vm-template.yaml
 
@@ -126,6 +127,13 @@ Memory usage:   838.5M out of 3.8G
 [Kubernetes Hardway ไทย](https://github.com/rdamrong/Kubernetes-The-Hard-Way-CentOS/blob/master/docs/10-install-worker-node.md)
 ```
 # รันคำสั่งนี้ในทุก Host Virtual Machine ที่เราสร้างขึ้นมาจะทำเป็น shell script วน loop เอาก็ได้นะ
+
+multipass exec rancher-host -- bash -c "sudo apt-get update -y && sudo apt-get install docker.io -y && sudo systemctl start docker && sudo systemctl enable docker &&sudo usermod -aG docker \$USER"
+
+multipass exec kube-master -- bash -c "sudo apt-get update -y && sudo apt-get install docker.io -y && sudo systemctl start docker && sudo systemctl enable docker &&sudo usermod -aG docker \$USER"
+
+multipass exec kube-worker -- bash -c "sudo apt-get update -y && sudo apt-get install docker.io -y && sudo systemctl start docker && sudo systemctl enable docker &&sudo usermod -aG docker \$USER"
+
 
 sudo apt-get update -y && sudo apt-get install docker.io -y && sudo systemctl start docker && sudo systemctl enable docker &&sudo usermod -aG docker $USER 
 
