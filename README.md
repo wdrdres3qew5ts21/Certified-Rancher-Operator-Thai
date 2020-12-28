@@ -849,11 +849,16 @@ Cluster Local ของเราเอง:
 3. View All Nodes
 ```
 
-### ResourceLimit
-
-
-
-
+### Resource Limit และ RBAC ของ User
+ส่วนต่อมาเราจะเพิ่ม User ลงไปใน Project พร้อมกำหนดตาม format RBAC ของ kbuernetes ว่า user คนนี้สามารถทำอะไรได้บ้าง [Kubernetes RBAC Authorization](https://kubernetes.io/docs/reference/access-authn-authz/rbac/) เช่น get/ delete/ edit => pod  โดยเราจะเริ่มจากการไปที่ Cluster Local เพื่อดู Project ทั้งหมดดั่งภาพด้วยการกดที่ Project/Namespace (ระดับ Cluser Local นะ)
+![alt Setting Project](images/resource-quota/set-quota/2.edit%20project%20to%20se%20resource%20and%20user%20who%20have%20access.png)
+ให้เรามาดูที่ Section Project Default แล้วกดที่มุมบนขวาของ Elipse Icon (จุดสามจุดแนวตั้ง) แล้วกดไปที่ Edit เพื่อทำการกำหนด Resource ของ Project ซึ่งจะส่งผลไปกับ Namespace ที่อยู่ภายใน Project ด้วยเช่น CPU ที่ใช้ได้ของ Project ทั้งหมดของ Project คือเท่าไหร่แล้ว Namespace หนึ่ง Limit CPU ไว้ที่เท่าไหร่ (กำหนด Limit ได้หลายอย่างนอกจากแค่ CPU, POD, Momory ก็ได้) 
+![alt Setting Project](images/resource-quota/set-quota/3.linxianer12-to-project-rancher.png)
+เราจะเริ่มจากการ Add Member ที่ Proejct ลงไปก่อนโดยการทำการใส่ username ลงไปและเรื่องของ Role เราจะมาทำการ custom แบบ Fined Grain เสมือนเรากำลัง config ผ่าน Role แล้วไปผูกกับ RoleBinding กับ Namespace นั้น
+![alt Setting Project](images/resource-quota/set-quota/4.linxianer12-customer-permission.png)
+เราจะเลือกให้ User นั้นสามารถ View Catalog ที่ถูก Deploy ไปแล้วได้, เห็น Service Kubernetes, เห็น Metrics และ Workload (Deployment) ที่มีอยู่แต่จะไม่สามารถไปเห็นส่วนอื่นหรือแก้ไขอะไรที่ไม่ได้รับอนุญาตตามนี้ได้
+![alt Setting Project](images/resource-quota/set-quota/5.set-pod-limit.png)
+เราจะกำหนด Resource Quota ไว้ให้ Namespace หนึ่งมี Pod ได้ไม่เกิน 5 และรวมกันทุกๆ Namespace ได้ไม่เกิน 10 (Project คือการรวมกันของทุกๆ Namespace)
 
 
 
