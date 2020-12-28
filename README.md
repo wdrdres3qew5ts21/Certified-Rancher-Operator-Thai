@@ -817,14 +817,42 @@ wordpress-p-62pbs   NodePort   10.43.138.100   10.34.196.181   80:30227/TCP,443:
 ผลลัพธ์ของ Service ที่ถูกใช้งานผ่าน NodePort
 ![alt Catalog Deploy Helm](images/catalog/wordpress-final.png)
 
-# Quota Limit สำหรับ Project
+# Authorization & Resource Management สำหรับ Project
+หลังจากที่เราเห็นภาพขั้นตอนของการ Deploy Service ใน Rancher ไปบ้างแล้วทีนี้เราลองมาปิดท้ายที่ด้วยการตั้ง Resource Quota ว่าแล้ว Developer ที่มาใช้งานนั้นสามารถเห็น Resource อะไรได้บ้างแล้วสามารถใช้งาน Resource นั้นๆได้หรือเปล่านะ ซึ่งก็จะเป็นการทดสอบการใช้งานแบบ Usecase ง่ายๆให้เห็นว่า Kubernetes Management Platform นั้นสามารถช่วยเรื่องคุณสมบัติของการใช้งานแบบเป็นทีมที่มีหลายๆคนได้นั่นเอง ซึ่งภายใน Rancher นั้นจะมีสิ่งที่เรียกว่า Project เพิ่มขึ้นมาจาก Kubernetes ปกติที่จะมีแค่ Namespace โดย Project นั้นจะประกอบไปด้วยหลายๆ Namespace และเราสามารถย้าย namespace ไปยัง Project อื่นได้ตราบใดที่ Project นั้นยังไม่ถูกเซ็ท Resource Quota เอาไว้
 
-### Project ประกอบไปด้วยหลายๆ Namespace
-1. เราไม่สามารถ move namespace ไปยัง Proejct ที่ถูก set Quota ได้
-2. Notifier Set ที่ระดับ Cluster ว่าจะแจ้งเตือนไปหาใคร 
+### User & Authorization
+เราจะเริ่มจากการสร้าง User ใหม่ขึ้นมาก่อนซึ่ง User คนนี้นั้นจะถูกสร้างที่ระดับ Cluster ของหน้า Management และกำหนดสิทธิว่า user คนนี้สามารถใช้งาน Rancher ส่วนใดได้บ้างซึ่งเราจะลองกำหนดสิทธิดังนี้
+Cluster Global > Security (ที่มีสัญลักษณ์ dropdown)
+![alt Add user to Rancher Cluster](images/resource-quota/add-user-global-login.png)
+ใส่ Username Password สำหรับผู้ใช้ที่จะ Login มายัง Console ของ Rancher
+![alt Add user to Rancher Cluster](images/resource-quota/add-user-fill-detail-forlogin.png)
+เซ็ท Permission คือให้ผู้ใช้คนนี้สามารถดูได้แค่ Metrics ของ Rancher เท่านั้นแต่ทำอะไรอย่างอื่นเพิ่มเติมไม่ได้
+เราจะเห็นผลลัพธ์คือมี Global User ขึ้นมารวมทั้งหมด 2 คนซึ่ง username: linxianer12 นั้นจะถูกแสดงใน GUI เป็นชื่อว่า Naomi Lin ตามที่เราเซ็ทเอาไว้
+![alt Add user to Rancher Cluster](images/resource-quota/global-user.png)
+เพิ่ม User ให้ไปอยู่ใน Cluster Local ของเราเพราะเมื่อตอนที่เราสร้าง User นั้นจะเป็น User Global ที่ลอยๆขึ้นมาแต่ถ้าอยากจะให้ใช้ได้กับ Cluster ไหนเราก็จำเป็นต้องนำ User คนนั้นแอดเข้าไปใน Cluster อีกทีนึง 
+##### **GUI นั้นมีความคล้ายกันอย่างมากแต่ดูดีๆจะพบว่า เรากำลังอยู่ที่ Cluster Local ไม่ได้อยู่ที่ Global !!! **
+![alt Add user to Rancher Cluster](images/resource-quota/add-user-cluster-login.png)
+กดเพิ่ม Add Member เข้าไปในระบบและค้นหาชื่อ member ผ่าน username ที่เราเพิ่มไปคือ linxianer12 แต่จะถูก Display Name ออกมาเป็น Naomi Lin และเราจะลองกำหนดสิทธิ์ให้สามารถ View Project, Cluster Catalogs, View Node ได้ (แต่ตอนแรกเราทำการปิดสิทธิระดับ globoal ไปแล้วจากตอนตั้ง global user permission คือมองไม่เห็น Catalog ให้ View ได้แค่ Metrics)
+![alt Add user to Rancher Cluster](images/resource-quota/set-user-cluster-permission.png)
+ถ้าเราทำการ Create User เสร็จแล้วเราจะเห็น User ใน Cluster Local ดั่งภาพนี้ (เพราะมองเป็น role แยกกันเลยเห็น user ซ้ำกันสามคน)
+![alt Add user to Rancher Cluster](images/resource-quota/cluster-role-permission.png)
+ถ้าเรามาจนถึงขั้นตอนนี้ได้เราจะมา list กันอีกทีว่า user ของเรานั้นมีสิทธิ์อะไรบ้าง
+```
+User: linxianer12           DisplayName: Naomi Lin
 
-# User & Authorization
-เราจะทดลองทำการสร้าง user ขึ้นมาผ่าน GUI บน Rancher และลองใช้ command line ในการ Object ใน Namespace ที่เราไม่ได้รับอนุญาตเพื่อพิสูจน์ว่า User นั้นสามารถใช้งานได้จริงและมีเรื่องของจัดการ RBAC ให้เรียบร้อยแล้ว
+Global Cluster User:
+1. View Metrics ได้อย่างเดียว
+
+Cluster Local ของเราเอง:
+1. View All Project
+2. View All Catalogs
+3. View All Nodes
+```
+
+### ResourceLimit
+
+
+
 
 
 
