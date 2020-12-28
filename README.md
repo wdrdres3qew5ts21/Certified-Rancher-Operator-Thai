@@ -829,6 +829,55 @@ Cluster Global > Security (ที่มีสัญลักษณ์ dropdown)
 เซ็ท Permission คือให้ผู้ใช้คนนี้สามารถดูได้แค่ Metrics ของ Rancher เท่านั้นแต่ทำอะไรอย่างอื่นเพิ่มเติมไม่ได้
 เราจะเห็นผลลัพธ์คือมี Global User ขึ้นมารวมทั้งหมด 2 คนซึ่ง username: linxianer12 นั้นจะถูกแสดงใน GUI เป็นชื่อว่า Naomi Lin ตามที่เราเซ็ทเอาไว้
 ![alt Add user to Rancher Cluster](images/resource-quota/global-user.png)
+```
+# ทดลองเช็คดู user Naomi Lin ว่ามี ID ตรงจริงๆกับที่สร้างผ่าน GUIหรือไม่
+kubectl get user -A
+
+NAME           AGE
+u-4zspk5tvan   6h27m
+u-94jh2        164m
+u-b4qkhsnliz   6h27m
+u-vzbmoiopai   3h34m
+u-zkguechov3   6h27m
+user-898f4     6h28m
+```
+
+```
+# ทดลองดู Detail ของ object user: Naomi Lin ก็พบว่า mapping เข้ากับ GUI  
+kubectl get user u-94jh2  -oyaml 
+
+apiVersion: management.cattle.io/v3
+description: ""
+displayName: Naomi Lin
+enabled: true
+kind: User
+metadata:
+  annotations:
+    field.cattle.io/creatorId: user-898f4
+    lifecycle.cattle.io/create.mgmt-auth-users-controller: "true"
+  creationTimestamp: "2020-12-28T10:12:23Z"
+  finalizers:
+  - controller.cattle.io/mgmt-auth-users-controller
+  generateName: u-
+  generation: 3
+  labels:
+    cattle.io/creator: norman
+  name: u-94jh2
+  resourceVersion: "77724"
+  selfLink: /apis/management.cattle.io/v3/users/u-94jh2
+  uid: d1a7e6df-1cba-4b67-8f0f-3bc6fdfcf929
+password: $2a$10$zqgV2tT44S7b30S9G2kKxOAw6kjoqG3/C1Jkmdzn8lbMGhiqMwr9e
+principalIds:
+- local://u-94jh2
+spec: {}
+status:
+  conditions:
+  - lastUpdateTime: "2020-12-28T10:12:23Z"
+    status: "True"
+    type: InitialRolesPopulated
+username: linxianer12
+```
+
 เพิ่ม User ให้ไปอยู่ใน Cluster Local ของเราเพราะเมื่อตอนที่เราสร้าง User นั้นจะเป็น User Global ที่ลอยๆขึ้นมาแต่ถ้าอยากจะให้ใช้ได้กับ Cluster ไหนเราก็จำเป็นต้องนำ User คนนั้นแอดเข้าไปใน Cluster อีกทีนึง 
 ##### **GUI นั้นมีความคล้ายกันอย่างมากแต่ดูดีๆจะพบว่า เรากำลังอยู่ที่ Cluster Local ไม่ได้อยู่ที่ Global !!! **
 ![alt Add user to Rancher Cluster](images/resource-quota/add-user-cluster-login.png)
@@ -860,7 +909,169 @@ Cluster Local ของเราเอง:
 ![alt Setting Project](images/resource-quota/set-quota/5.set-pod-limit.png)
 เราจะกำหนด Resource Quota ไว้ให้ Namespace หนึ่งมี Pod ได้ไม่เกิน 5 และรวมกันทุกๆ Namespace ได้ไม่เกิน 10 (Project คือการรวมกันของทุกๆ Namespace)
 
+จนมาถึงตอนนี้เราจะมาดูกันว่าแล้ว Object User นั้นไปทำเรื่องของการ Authentication ได้อย่างไรซึ่งเราจะเรียกใช้ api-resources ของ Kubernetes ในการเช็คดู Custom Resource Defination ของ Rancher
+```
+[linxianer12@localhost certified-rancher-operator]$ kubectl api-resources | grep cattle
+apps                                                    catalog.cattle.io              true         App
+clusterrepos                                            catalog.cattle.io              false        ClusterRepo
+operations                                              catalog.cattle.io              true         Operation
+bundledeployments                                       fleet.cattle.io                true         BundleDeployment
+bundlenamespacemappings                                 fleet.cattle.io                true         BundleNamespaceMapping
+bundles                                                 fleet.cattle.io                true         Bundle
+clustergroups                                           fleet.cattle.io                true         ClusterGroup
+clusterregistrations                                    fleet.cattle.io                true         ClusterRegistration
+clusterregistrationtokens                               fleet.cattle.io                true         ClusterRegistrationToken
+clusters                                                fleet.cattle.io                true         Cluster
+contents                                                fleet.cattle.io                false        Content
+gitreporestrictions                                     fleet.cattle.io                true         GitRepoRestriction
+gitrepos                                                fleet.cattle.io                true         GitRepo
+gitjobs                                                 gitjob.cattle.io               true         GitJob
+authconfigs                                             management.cattle.io           false        AuthConfig
+catalogs                                                management.cattle.io           false        Catalog
+catalogtemplates                                        management.cattle.io           true         CatalogTemplate
+catalogtemplateversions                                 management.cattle.io           true         CatalogTemplateVersion
+cisbenchmarkversions                                    management.cattle.io           true         CisBenchmarkVersion
+cisconfigs                                              management.cattle.io           true         CisConfig
+clusteralertgroups                                      management.cattle.io           true         ClusterAlertGroup
+clusteralertrules                                       management.cattle.io           true         ClusterAlertRule
+clusteralerts                                           management.cattle.io           true         ClusterAlert
+clustercatalogs                                         management.cattle.io           true         ClusterCatalog
+clusterloggings                                         management.cattle.io           true         ClusterLogging
+clustermonitorgraphs                                    management.cattle.io           true         ClusterMonitorGraph
+clusterregistrationtokens                               management.cattle.io           true         ClusterRegistrationToken
+clusterroletemplatebindings                             management.cattle.io           true         ClusterRoleTemplateBinding
+clusters                                                management.cattle.io           false        Cluster
+clusterscans                                            management.cattle.io           true         ClusterScan
+clustertemplaterevisions                                management.cattle.io           true         ClusterTemplateRevision
+clustertemplates                                        management.cattle.io           true         ClusterTemplate
+composeconfigs                                          management.cattle.io           false        ComposeConfig
+dynamicschemas                                          management.cattle.io           false        DynamicSchema
+etcdbackups                                             management.cattle.io           true         EtcdBackup
+features                                                management.cattle.io           false        Feature
+fleetworkspaces                                         management.cattle.io           false        FleetWorkspace
+globaldnses                                             management.cattle.io           true         GlobalDns
+globaldnsproviders                                      management.cattle.io           true         GlobalDnsProvider
+globalrolebindings                                      management.cattle.io           false        GlobalRoleBinding
+globalroles                                             management.cattle.io           false        GlobalRole
+groupmembers                                            management.cattle.io           false        GroupMember
+groups                                                  management.cattle.io           false        Group
+kontainerdrivers                                        management.cattle.io           false        KontainerDriver
+monitormetrics                                          management.cattle.io           true         MonitorMetric
+multiclusterapprevisions                                management.cattle.io           true         MultiClusterAppRevision
+multiclusterapps                                        management.cattle.io           true         MultiClusterApp
+nodedrivers                                             management.cattle.io           false        NodeDriver
+nodepools                                               management.cattle.io           true         NodePool
+nodes                                                   management.cattle.io           true         Node
+nodetemplates                                           management.cattle.io           true         NodeTemplate
+notifiers                                               management.cattle.io           true         Notifier
+podsecuritypolicytemplateprojectbindings                management.cattle.io           true         PodSecurityPolicyTemplateProjectBinding
+podsecuritypolicytemplates                              management.cattle.io           false        PodSecurityPolicyTemplate
+preferences                                             management.cattle.io           true         Preference
+projectalertgroups                                      management.cattle.io           true         ProjectAlertGroup
+projectalertrules                                       management.cattle.io           true         ProjectAlertRule
+projectalerts                                           management.cattle.io           true         ProjectAlert
+projectcatalogs                                         management.cattle.io           true         ProjectCatalog
+projectloggings                                         management.cattle.io           true         ProjectLogging
+projectmonitorgraphs                                    management.cattle.io           true         ProjectMonitorGraph
+projectnetworkpolicies                                  management.cattle.io           true         ProjectNetworkPolicy
+projectroletemplatebindings                             management.cattle.io           true         ProjectRoleTemplateBinding
+projects                                                management.cattle.io           true         Project
+rkeaddons                                               management.cattle.io           true         RkeAddon
+rkek8sserviceoptions                                    management.cattle.io           true         RkeK8sServiceOption
+rkek8ssystemimages                                      management.cattle.io           true         RkeK8sSystemImage
+roletemplates                                           management.cattle.io           false        RoleTemplate
+samltokens                                              management.cattle.io           true         SamlToken
+settings                                                management.cattle.io           false        Setting
+templatecontents                                        management.cattle.io           false        TemplateContent
+templates                                               management.cattle.io           false        Template
+templateversions                                        management.cattle.io           false        TemplateVersion
+tokens                                                  management.cattle.io           false        Token
+userattributes                                          management.cattle.io           false        UserAttribute
+users                                                   management.cattle.io           false        User
+apprevisions                                            project.cattle.io              true         AppRevision
+apps                                                    project.cattle.io              true         App
+pipelineexecutions                                      project.cattle.io              true         PipelineExecution
+pipelines                                               project.cattle.io              true         Pipeline
+pipelinesettings                                        project.cattle.io              true         PipelineSetting
+sourcecodecredentials                                   project.cattle.io              true         SourceCodeCredential
+sourcecodeproviderconfigs                               project.cattle.io              true         SourceCodeProviderConfig
+sourcecoderepositories                                  project.cattle.io              true         SourceCodeRepository
+clusters                                                rancher.cattle.io              true         Cluster
+projects                                                rancher.cattle.io              true         Project
+roletemplatebindings                                    rancher.cattle.io              true         RoleTemplateBinding
+roletemplates                                           rancher.cattle.io              false        RoleTemplate
 
+```
+จาก List ข้างบนนั้นจะแสดง CRDs ของ Rancher ทั้งหมดซึ่งเราสังเกตดูว่าหลักการผูก User ของ Kubernetes นั้นมี Pattern คือการสร้าง Role แล้วข้างในนั้นมี Verb กับ Resource ที่โดนเรียกอยู่เราก็จะสามารถเข้าไปแกะดูข้อมูลข้างใน Rancher ได้ไม่ยากนัก
+ซึ่ง projecttempaltebindings ก็จะเป็นตัวใช้ผูก projecttemplate ที่ถูกสร้างไว้ก่อนแล้วเข้าด้วยกัน
+```
+[linxianer12@localhost certified-rancher-operator]$ kubectl get projectroletemplatebindings -A
+NAMESPACE   NAME                       AGE
+p-62pbs     creator-project-owner      6h39m
+p-62pbs     prtb-dnllz                 159m
+p-62pbs     prtb-kjnrc                 159m
+p-62pbs     prtb-l7fps                 159m
+p-62pbs     prtb-wp7lq                 159m
+p-62pbs     u-4zspk5tvan-member        6h39m
+p-62pbs     wordpress-project-member   3h45m
+p-vwr2n     creator-project-owner      6h39m
+p-vwr2n     u-zkguechov3-member        6h39m
+
+```
+และถ้าสังเกตดูเราจะเห็น namespace p-62pbs อีกด้วยซึ่งถ้าเราลองไปดู REST API ของ Rancher เราจะเห็นค่าดั่งนี้ local:p-62pbs ซึ่งเป็น namespaces ของ Project นั่นเอง User ที่เกิดขึ้นจึงอยู่ในนี้ด้วยเช่นกัน (REST API สามารถดูได้ด้วยการกดที่ปุ่มที่ Project > View in API)
+![alt Rancher Proejct REST API](images/resource-quota/set-quota/6.project-id.png)
+
+หลังจากเรารู้แล้วว่ามี user: Naomi Lin ที่อยู่ใน 
+1. Namespace : p-62pbs
+2. User ID: u-94jh2
+
+เราจะทำการเข้าไปใช้ Json Template ในการดึง Role ทั้งหมดที่เกี่ยวข้องกับ user ของเรา แต่ก่อนอื่นเราจะลองมาดูหน้าตา Format ของ projectroletempaltebindings ที่ใช้ผูก RBAC ของ User ก่อนจากการทดลองไปเรียกสัก rolebinding นึง
+   
+```
+kubectl get projectroletemplatebindings  prtb-dnllz -oyaml  -n p-62pbs
+
+apiVersion: management.cattle.io/v3
+kind: ProjectRoleTemplateBinding
+metadata:
+  annotations:
+    field.cattle.io/creatorId: user-898f4
+    lifecycle.cattle.io/create.cluster-prtb-sync_local: "true"
+    lifecycle.cattle.io/create.mgmt-auth-prtb-controller: "true"
+  creationTimestamp: "2020-12-28T10:29:17Z"
+  finalizers:
+  - controller.cattle.io/mgmt-auth-prtb-controller
+  - clusterscoped.controller.cattle.io/cluster-prtb-sync_local
+  generateName: prtb-
+  generation: 3
+  labels:
+    auth.management.cattle.io/crb-rb-labels-updated: "true"
+    authz.cluster.cattle.io/crb-rb-labels-updated: "true"
+    cattle.io/creator: norman
+  name: prtb-dnllz
+  namespace: p-62pbs
+  resourceVersion: "83389"
+  selfLink: /apis/management.cattle.io/v3/namespaces/p-62pbs/projectroletemplatebindings/prtb-dnllz
+  uid: dfe908bc-e837-4996-b65e-9f25a9ea442c
+projectName: local:p-62pbs
+roleTemplateName: services-view
+userName: u-94jh2
+userPrincipalName: local://u-94jh2
+```
+จะเห็นว่าเราต้องการจะ Filter แสดงเฉพาะผลลัพธ์ของ userName: u-94jh2 (Naomi Lin) เราก็จะใช้ kubectl jsonpath แล้วตั้ง Condition ว่าถ้า userName == "u-94jh2" จะให้แสดง roleTemplateName ของผู้ใช้คนนั้นออกมา
+โดน Syntax เป็นการใช้ .items[?(@.CONDITION_FIELDS=="")].DISPLAY_FIELD
+โดยเงื่อนไขของเราคือ [อ้างอิง JSON Path Kubectl](https://kubernetes.io/docs/reference/kubectl/jsonpath/)
+```
+?(@.userName=="u-94jh2") จะหมายถึง YAML จะต้องมีค่า userName: u-94jh2
+
+.roleTemplateName จะหมายถึง values ของ KEY ชื่อนี้ใน YAML ที่จะมาแสดงผล
+```
+
+ผลลัพธ์จะมี 4 Roles ตรงกับที่ Customs เป๊ะๆในตอนที่ Add User เข้าไปใน Project
+```
+kubectl get projectroletemplatebindings   -ojsonpath='{.items[?(@.userName=="u-94jh2")].roleTemplateName}' -A ;echo
+
+services-view workloads-view projectroletemplatebindings-view projectcatalogs-view
+```
 
 
 # Ingress
