@@ -1,6 +1,6 @@
-![alt text](images/rancher-cover.png "Cover Image")
+![Certified Rancher Operator Cover](images/rancher-cover.png "Cover Image")
 # Introduction Kubernetes Container Platform Management
-(แต่สำหรับผู้เรียนรู้ใหม่การเรียนรู้ Kubernetes แบบลึกๆจนไปถึงแก่นนั้นเป็นสิ่งสำคัญนะ ! เพราะจะชวยให้เราต่อยอดเองได้ในอนาคตรวมไปถึงการ Debug ด้วยซึ่งสามารถตามไปที่ Repository ของอาจารย์จุ๊บ Damrongsak ได้กับ Kubernetes Hardway ซึ่งเป็น Repository ที่ดีมากๆ)
+
 แน่นอนว่าหลายๆคนในช่วงนี้ย่อมเคยได้ยินถึง Kubernetes และใช้งานกันแล้วบ้างซึ่งจะเห็นได้เลยว่า Kubernetes คือ Container Orchestration Platform 
 ที่ช่วยให้เราสามารถจัดการควบคุม Application ที่ pack เป็น Container Image เรียบร้อยแล้วแต่ต้องการ Deploy ไปหลายๆ Application และจะทราบได้อย่างไรว่า Application เหล่านัั้นทำงานแล้วมีปัญหาหรือไม่ ควรรับ Traffic ที่ Request เข้ามาหรือเปล่า ?  หรือควรพักไว้ก่อนเพราะว่า Application เรารับโหลดไม่ไหวและเริ่ม Delay แล้ว ซึ่งการจัดการในเชิง Platform Infrastructure ของ Application ก็จะถูกจัดการให้ง่ายด้วยด้วยการใช้ Kubernetes ซึ่งเราจะลองยกตัวอย่างให้ดูจากตัวอย่างเหล่านี้ครับ ว่า Kubernetes ใน Concept นั้นทำอะไรได้บ้าง 
 
@@ -596,7 +596,7 @@ Window สามารถทำเป็น Worker ได้แต่ถ้า E
 
 # Debug Control Plane
 เราจะสังเกตเห็นว่า Leader นั้นวิธีการดูจะต่างจาก Kubernetes ปกติเพราะว่าเราไม่มี Kubelet ตรงๆหรือ API Server Command แต่เราสามารถดูได้จากการไปดูที่ Endpoint แล้วดูจาก Annotation ที่แปะไว้ว่าใครเป็น Leader ผ่านคำสั่ง 
-แต่ความน่าสนใจคือ Kubelet ปกติที่ต้องเป็น Service จริงๆลงผ่าน systemd แต่มันจะไม่มีใน Rancher เพราะใช้ทุกอย่างเป้น Docker แทนโดยเราจะเห็น Service ได้จากการลองดูผ่าน Container ของ Docker ผ่าน docker ps ได้นั่นเอง (แทน kubelet แบบ service)
+แต่ความน่าสนใจคือ Kubelet ปกติที่ต้องเป็น Service จริงๆลงผ่าน systemd แต่มันจะไม่มีใน Rancher เพราะใช้ทุกอย่างเป็น Docker แทนโดยเราจะเห็น Service ได้จากการลองดูผ่าน Container ของ Docker ผ่าน docker ps ได้นั่นเอง (แทน kubelet แบบ service)
 ETCD, kube-apiserver และ kube-scheduler นั้นจะดูได้ผ่าน Docker จริงๆเท่านั้นไม่เห็นบน kubectl (ในนั้นมีแค่ Core-DNS)
 ```
 kubectl get ep -n kube-system  [ชื่อ endpoint] -oyaml
@@ -688,8 +688,8 @@ tcp        0      0 0.0.0.0:80              0.0.0.0:*               LISTEN      
 tcp        0      0 0.0.0.0:80              0.0.0.0:*               LISTEN      -           
 
 ```
-# Debug Control Plane Component แบบไที่ไม่ใช้ Systemd เป้น Service แต่ใช Container แทน
-
+### Debug Control Plane Component 
+เราจะพบว่าทั้ง Stack ของ Rancher นั้นใช้ทุกอย่างบน Docker Container จริงๆและถ้า Component ไหนที่จะต้องการเปิด Port ให้เห็นบน Host ก็จะเลือกใช้ Driver Host ของ docker ในการ Expose Port ออกมา (เห็นบน localhost ของ machine จริงๆ)
 ```
 ubuntu@kube-worker:~$ docker network ls                                                                                                                                                       
 NETWORK ID          NAME                DRIVER              SCOPE                                                                                                                             
@@ -1073,40 +1073,80 @@ kubectl get projectroletemplatebindings   -ojsonpath='{.items[?(@.userName=="u-9
 services-view workloads-view projectroletemplatebindings-view projectcatalogs-view
 ```
 ซึ่งหลังจากที่ลองไปดู Code เบื้องหลังของ Rancher มาก็เข้าใจว่า Rancher ใช้ตัวแปรเหล่าน้ในการกำหนดสิทธิต่างๆนี่แหละเป็น Static Value ไป
-![alt Authentication Static Value](images/resource-quota/set-quota/7.authen-code.png)
+![Authentication Static Value](images/resource-quota/set-quota/7.authen-code.png)
 
 [Soure Code Authentication บน Manager ใน Rancher บน Github](https://github.com/rancher/rancher/blob/master/pkg/controllers/management/auth/manager.go)
-![alt Authentication Static Value](images/resource-quota/set-quota/8.sourcecode-role.png)
+![Authentication Static Value](images/resource-quota/set-quota/8.sourcecode-role.png)
 [Soure Code Role ใน Rancher บน Github](https://github.com/rancher/rancher/blob/0257d0faee6ac32d087b7dae76834c016426cb50/pkg/data/management/role_data.go)
 
 
-### ทดสอบ User ที่สร้างขึ้นมาใหม่
+##### ทดสอบ User ที่สร้างขึ้นมาใหม่
+เราจะลอง Login ด้วย userid ที่เราสร้างขึ้นมาใหม่และลองดูว่า User นี้จะสามารถลบ Catalog หรือสร้าง Catalog ได้มั้ย ? (เพราะเราไม่ให้สิทธิเห็น Catalog Global)
+โดยเราจะเริ่มจากการมาดูที่ Catalog ที่เคย Deploy ไปแล้วใน Cluster Local เราจะพบว่าเราสามารถเห็นได้ปกติ (นั่นก็เพราะมันกลายเป็น Workload Deployment ไปแล้วนั่นเอง)
+![see-existing-deploy-app-catalog](images/resource-quota/proof-authorize/1.see-existing-deploy-app-catalog.png)
+แต่ถ้าเราลองมากดปุ่ม Options เพื่ออยากจะลบ Catalog ดูก็จะพบว่าไม่สามารถลบได้เหมือน User Admin เพราะเราไม่มีสิทธิในการลบนั่นเอง
+![cant-delete-catalog](images/resource-quota/proof-authorize/2.cant-delete-catalog.png)
+แล้วถ้าลองมาสร้าง Catalog ใหม่ก็จะไม่เห็นเช่นเดียวกันเพราะเราไม่ได้ให้สิทธิไว้
+![not-found-catalog](images/resource-quota/proof-authorize/3.not-found-catalog.png)
+จากนั้นเราจะลองมาที่ Workload และทำการลองลบ Frontend-Dino ของเรากันดูก็จะพบว่าไม่สามารถลบได้กันเพราะว่าไม่มีสิทธินั่นเอง
+![workload-try-authz](images/resource-quota/proof-authorize/4.workload-try-authz.png)
+ซึ่งให้เราไปขอ Access Token จากที่มุมบนขวาของเราโปรไฟล์แล้วกดขอ Access Key มาซึ่ง token นี้ถ้าหายแล้วก็จะหายเลยต้องขอใหม่อย่างเดียวแล้วเวลาที่เราทำการขอ Authentication Rancher ก็จะทำการ Generate kubeconfig ไฟล์ให้เราใหม่นั่นเองสำหรับ User ใหม่ที่ไม่ได้เป็น Admin
+แต่ก่อนอื่นเราก็จะต้องโหลด Binary commandline ของ Rancher มาด้วยซึ่ง Rancher Commandline นั้นให้เรียกว่าเป้นส่วนต่อยอดของ kubectl เพราะว่าทุกอย่างนั้นเหมือนเดิมทุกประการแต่เพิ่มความสามารถของ Rancher เข้าไปเช่นการดู Project ซึ่งไม่มีคอนเซปนี้ใน Kubernetes (มันก็เลยไม่มีใน kubectl ด้วย)
 
+![Rancher Bianry](images/resource-quota/proof-authorize/6.rancher-binary.png)
 
-
-# Ingress
-Annotation ที่สำคัญคือเพราะว่าจะทำให้ Cert Manager มาดูที่ Ingress นี้แล้วสั่งทำ ACME แบบ HTTP01 เพื่อขอ Certificate นั่นเอง
-### kubernetes.io/tls-acme: "true"
+หลังจากติดตั้ง Binary rancher ไว้ในที่สามารถ Execute ได้แล้วเราก็จะใช้คำสั่ง rancher login และระบุ endpoint ไปยัง Rancher Server ของเราพร้อมนำ token ที่ได้มาแปะไปด้วย 
 ```
-apiVersion: extensions/v1beta1
-kind: Ingress
-metadata:
-  name: hello-world
-  annotations:
-    # enable kube-lego for this ingress
-    kubernetes.io/tls-acme: "true"
-spec:
-  # this enables tls for the specified domain names
-  tls:
-  - hosts:
-    - demo.kube-lego.jetstack.net
-    secretName: hello-world-tls
-  rules:
-  - host: demo.kube-lego.jetstack.net
-    http:
-      paths:
-      - path: /
-        backend:
-          serviceName: hello-world
-          servicePort: 80
+Do you want to continue connecting (yes/no)? yes
+INFO[0002] Saving config to /home/linxianer12/.rancher/cli2.json 
+
+[linxianer12@localhost ~]$ rancher login https://rancher.cloudnative --token token-28jqm:fbh2b6cx75625hnr95rnsdbzl7xsjrtrxcs5hpb9nz5ftrn4tqgrbl^C
+
+[linxianer12@localhost ~]$ cat /home/linxianer12/.rancher/cli2.json | jq
+{
+  "Servers": {
+    "rancherDefault": {
+      "accessKey": "token-28jqm",
+      "secretKey": "fbh2b6cx75625hnr95rnsdbzl7xsjrtrxcs5hpb9nz5ftrn4tqgrbl",
+      "tokenKey": "token-28jqm:fbh2b6cx75625hnr95rnsdbzl7xsjrtrxcs5hpb9nz5ftrn4tqgrbl",
+      "url": "https://rancher.cloudnative",
+      "project": "local:p-62pbs",
+      "cacert": "-----BEGIN CERTIFICATE-----\nMIIBhzCCAS6gAwIBAgIBADAKBggqhkjOPQQDAjA7MRwwGgYDVQQKExNkeW5hbWlj\nbGlzdGVuZXItb3JnMRswGQYDVQQDExJkeW5hbWljbGlzdGVuZXItY2EwHhcNMjAx\nMjjOPQMBBwNCAASwvgg9Ffoe+5CpuJqdPHer7KAdMZdHtNFpG1QOAFQU\nV1OdAsw+iBG2BOc/2Z7Nbnvx17I66PwCDTgfKA5Mt7IuoyMwITAOBgNVHQ8BAf8E\nBAMCAqQwDwYDVR0TAQH/BAUwAwEB/zAKBggqhkjOPQQDAgNHADBEAiAT/q4EcXFz\n2zNnX17rO6wA5bVr/+61NZYvOW349hjvQQIgJtcelVhmZKyVbz06aQaZFjqpz99z\nUkGgrfBQqCbcjGw=\n-----END CERTIFICATE-----"
+    }
+  },
+  "CurrentServer": "rancherDefault"
+}
 ```
+เพียงเท่านี้เราก็สามารถเรียกใช้คำสั่ง kubectl ผ่าน commandline ได้แล้วนั่นเองโดยเติมคำนำหน้าว่า rancher ทุกครั้ง
+เราจะมาทำการทดสอบคำสั่งต่างๆกันเพื่อเช็คว่า user ใหม่เรานั้นทำอะไรได้บ้าง
+
+```
+[linxianer12@localhost certified-rancher-operator]$ rancher kubectl get pod
+NAME                            READY   STATUS    RESTARTS   AGE
+frontend-dino-bc7b7485c-lgf2s   1/1     Running   1          8h
+[linxianer12@localhost certified-rancher-operator]$ rancher kubectl get svc
+NAME                    TYPE        CLUSTER-IP    EXTERNAL-IP     PORT(S)          AGE
+frontend-dino-service   NodePort    10.43.14.25   10.34.196.215   3000:31944/TCP   8h
+kubernetes              ClusterIP   10.43.0.1     <none>          443/TCP          9h
+[linxianer12@localhost certified-rancher-operator]$ rancher kubectl auth can-i  delete pod 
+no
+exit status 1
+[linxianer12@localhost certified-rancher-operator]$ rancher kubectl auth can-i  delete deployment
+no
+exit status 1
+
+```
+ทดลองใช้คำสั่งที่เปน Feature ของ Rancher เช่นการดู Projects
+```
+[linxianer12@localhost certified-rancher-operator]$ rancher projects
+ID              NAME      STATE     DESCRIPTION
+local:p-62pbs   Default   active    Default project created for the cluster
+local:p-vwr2n   System    active    System project created for the cluster
+
+```
+
+# ปิดท้าย
+สำหรับ Guide Line การใช้งาน Rancher และ Kubernetes ก็จบลงเท่านี้ถ้าหากเพื่อนๆคนไหนที่กำลังจะไปสอบ Certified Kubernetes Administrator มีข้อสงสัยก็สามารถมาสอบถามกันได้นะ 
+แนะนำให้ลองทำ Kubernetes Hardway สักสองสามครั้งหรือจนกว่าจะเข้าส่วนประกอบใน Kuberntes เรื่อง Command นั้นอาจจะต้องจำบ้างก็จริงแต่ที่สำคัญคือการเขาใจ ทฤษฎีใน Kubernetes ซึ่งจะสามารถไปประยกต์ใช้กับการออกแบบโปรแกรมที่เราเขียนได้ด้วย 
+ว่าควรออกแบบอย่างไรให้สามารถกระจายออกจากกันเป้น Module และสเกลกันได้ดี
+
