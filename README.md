@@ -1156,3 +1156,25 @@ local:p-vwr2n   System    active    System project created for the cluster
 แนะนำให้ลองทำ Kubernetes Hardway สักสองสามครั้งหรือจนกว่าจะเข้าส่วนประกอบใน Kuberntes เรื่อง Command นั้นอาจจะต้องจำบ้างก็จริงแต่ที่สำคัญคือการเขาใจ ทฤษฎีใน Kubernetes ซึ่งจะสามารถไปประยกต์ใช้กับการออกแบบโปรแกรมที่เราเขียนได้ด้วย 
 ว่าควรออกแบบอย่างไรให้สามารถกระจายออกจากกันเป้น Module และสเกลกันได้ดี
 ตัวผมเองก็พึ่งผ่าน Certified Kubernetes Adminsitrator มาได้และรู้สึกว่ายังมีอีกหลายเรื่องที่น่าสนใจไว้จะมาแบ่งปันกันใหม่ครั้งหน้านะครับผม
+
+### รวมบทความ
+0. [API Management คืออะไรกันและเราสามารถทำอะไรได้บ้างนะ](https://wdrdres3qew5ts21.medium.com/d88d12235d3e)
+![](images/article/api-management.png)
+
+1. [ทำความเข้าใจ TLS Certificate บน Kubernetes และ Service Mesh Gateway ผ่าน Cert-Manager แบบ DNS Challenge](https://wdrdres3qew5ts21.medium.com/dc1c70cf6634)
+![](images/article/istio-tls-automation-dns-challenge.png)
+
+2. [Handbook เจาะลึก architecture service mesh ใน cloud native พร้อมวิธีทำtraffic shifting ฉบับปี-2020](https://wdrdres3qew5ts21.medium.com/dc1c70cf6634)
+![](images/article/servicemesh-cloudnative-stack.png)
+
+3. [Hybrid cloud บน Openshift ด้วย skupper และแนวคิดของ virtual application network](https://wdrdres3qew5ts21.medium.com/dc1c70cf6634)
+[api-management-คืออะไรกันและเราสามารถทำอะไรได้บ้างนะ](https://wdrdres3qew5ts21.medium.com/dc1c70cf6634)
+![](images/article/hybrid-cloud-openshift.png)
+
+
+4. [Handbook วิธีใช้งาน Jenkins syntax pipeline พร้อมการทำ continuous-delivery-ไปยัง-kubernetes](https://wdrdres3qew5ts21.medium.com/dc1c70cf6634)
+
+![](images/article/jenkins-cicd.png)
+
+5. [ทุกคนคือ DevOps เพราะ Culture & Mindsets คือพวกเรา!](https://wdrdres3qew5ts21.medium.com/8d7d4e0407ef)
+![](images/article/devops.png)  
