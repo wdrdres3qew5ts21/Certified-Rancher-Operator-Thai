@@ -785,48 +785,37 @@ Banzai Chart Repository: https://github.com/banzaicloud/banzai-charts
 ![alt Catalog Deploy Helm](images/catalog/5.png)
 เลือก Wordpress กำหนด Password/ User และ Service ที่จะใช้ Expose ออกไปซึ่งก้สามารถกรอกผ่าน GUI ได้เลย (เบื้องหลังมันก้คือ values.yaml นั่นเอง)
 ![alt Catalog Deploy Helm](images/catalog/wordpress.png)
+กรอก paramter credentials ที่เราต้องการตามความเหมาะสมและ Service จะให้ Expose เป็น Node Port แทนเพราะใน Fedora Workstation ยังไม่มี MetalLB จึงขอใช้งาน NodePort ไปก่อนครับ
+![alt Catalog Deploy Helm](images/catalog/wordpress2.png)
+จากนั้นเราจะทดลองเช็คกันดูว่า Wordpress Deploy ได้สำเร็จหรือไม่ผ่านการดูด้วย kubectl get deployment -A เพื่อดู namespace ที่ wordpress ถูก generate ขึ้นมาและไปอยู่ใน namespace นั้น
+![alt Catalog Deploy Helm](images/catalog/wordpress3.png)
+ถ้าหากการ Depploy ไม่ติดปัญหาอะไรเราก็จะสามารถดูได้จาก kubectl และเห็น deployment ที่ถูกสร้างขึ้นมา และเราจะทดลองเข้าไป inspect logs ข้างใน pod กัน
+```
+kubectl logs -f [ชื่อ pod] -n [namespace ที่เห็นจากคำสั่งก่อนหน้า]
+```
+![alt Catalog Deploy Helm](images/catalog/wordpress4.png)
+```
+kubectl get svc -n wordpress-p-62pbs # เราจะทำการ เพิ่ม externalIp ของ Kubernetes Node เข้าไป
 
-จากนั้นเราจะทดลองเช็คกันดูว่า Wordpress Deploy ได้สำรเ็จหรือไม่ผ่าน kubectl get deployment -n wordpress
+NAME                        TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)                      AGE
+wordpress-p-62pbs           NodePort    10.43.138.100   <none>        80:30227/TCP,443:30627/TCP   13m
+wordpress-p-62pbs-mariadb   ClusterIP   10.43.229.144   <none>        3306/TCP                     13m
+```
+แก้ไขโดยเพิ่ม section ของ externalIPs ที่เราจะ Listen เข้าไป
+![alt Catalog Deploy Helm](images/catalog/wordpress5.png)
+```
+kubectl edit svc -n wordpress-p-62pbs # เพิ่ม externalIPs: เข้าไป
 
 ```
-[linxianer12@localhost ~]$ kubectl logs -f -n wordpress  wordpress-56c9c66cdf-xbrm7 
-
-Welcome to the Bitnami wordpress container
-Subscribe to project updates by watching https://github.com/bitnami/bitnami-docker-wordpress
-Submit issues and feature requests at https://github.com/bitnami/bitnami-docker-wordpress/issues
-Send us your feedback at containers@bitnami.com
-
-WARN  ==> You set the environment variable ALLOW_EMPTY_PASSWORD=yes. For safety reasons, do not use this flag in a production environment.
-nami    INFO  Initializing apache
-nami    INFO  apache successfully initialized
-nami    INFO  Initializing php
-nami    INFO  php successfully initialized
-nami    INFO  Initializing mysql-client
-nami    INFO  mysql-client successfully initialized
-nami    INFO  Initializing wordpress
-wordpre INFO  ==> Preparing Varnish environment
-wordpre INFO  ==> Preparing Apache environment
-wordpre INFO  ==> Preparing PHP environment
-mysql-c INFO  Trying to connect to MySQL server
-mysql-c INFO  Found MySQL server listening at wordpress-mariadb:3306
-mysql-c INFO  MySQL server listening and working at wordpress-mariadb:3306
-wordpre INFO  Preparing WordPress environment
-wordpre INFO 
-wordpre INFO  ########################################################################
-wordpre INFO   Installation parameters for wordpress:
-wordpre INFO     First Name: FirstName
-wordpre INFO     Last Name: LastName
-wordpre INFO     Username: admin
-wordpre INFO     Password: **********
-wordpre INFO     Email: wdrdres3qew5ts21@gmail.com
-wordpre INFO     Blog Name: User's Blog!
-wordpre INFO     Table Prefix: wp_
-wordpre INFO   (Passwords are not shown for security reasons)
-wordpre INFO  ########################################################################
-wordpre INFO 
-nami    INFO  wordpress successfully initialized
-INFO  ==> Starting gosu... 
+เพิ่ม IP ของ Node เข้าไปในการ Listen Node Port (จะเป็น IP VM ไหนก็ได้) แล้วจากนั้นนั้นเราจะทดลองเข้าไปยัง IP:Port ของ Service Wordpress ที่เรา Expose กันดู
+[alt สรุปเรื่อง Kubernetes Services บน GKE หลังศึกษาและทดลองอย่างเอาจริงเอาจัง](https://www.spicydog.org/blog/my-summary-on-gke-services/)
 ```
+[linxianer12@localhost ~]$ kubectl get svc  wordpress-p-62pbs  -n wordpress-p-62pbs
+NAME                TYPE       CLUSTER-IP      EXTERNAL-IP     PORT(S)                      AGE
+wordpress-p-62pbs   NodePort   10.43.138.100   10.34.196.181   80:30227/TCP,443:30627/TCP   24m
+```
+ผลลัพธ์ของ Service ที่ถูกใช้งานผ่าน NodePort
+![alt Catalog Deploy Helm](images/catalog/wordpress-final.png)
 
 # Quota Limit สำหรับ Project
 
