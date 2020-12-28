@@ -434,7 +434,7 @@ metadata:
 ซึ่งเราสามารถทดลองไปแก้ไขได้จากการ Inspect เข้าไปใน Cluster นั้นผ่าน GUI Cluster Explorer เมื่อกดไปแล้ว URL ลอง Domain ก็จะเปลี่ยนไปมีคำว่า /explorer ต่อท้ายเป็น rootpath เริ่มต้นสำหรับ View Mode Cluster นั้นๆซึ่งจะใช้งานแทน Kubernetes Dashboard ได้เลยและให้รายละเอียดที่ชัดเจนมากกว่า
 ![alt Cluster Explorer](images/cluster-explorer/cluster%20exploter%20dashboard.png)
 
-เราจะลองเข้าไปต่อที่ Node Detail ในหน้า View ของ Clsuter Explorer
+เราจะลองเข้าไปต่อที่ Node Detail ในหน้า View ของ Cluster Explorer
 ซึ่งตรงนั้นจะแสดงให้เราเห็นถึง Threshold ที่ตั้งโดย Kubelet แบบเห็นชัดเจนเข้าใจง่ายว่า Node ของเรานั้นมีปัญหาหรือไม่รวมไปถึง Metrics ต่างๆอีกด้วย
 ![alt Cluster Explorer](images/cluster-explorer/node%20describe%20metrcis.png)
 
@@ -468,7 +468,9 @@ INFO[0001] Starting container [rke-etcd-port-listener] on host [192.168.122.27],
 # Backup Snapshot
 ในส่วนต่อมาเราจะทดลองใช้ Feature การ Backup ETCD Database เอาไว้เพื่อว่าเรา Cluster ของเรานั้นมีปัญหาจะได้สามารถกู้ State ของ Cluster กลับมาได้ (เป็นแค่การ Backup State ของ Cluster นะแต่ไมไ่ด้ Backup Persistent Volume ของ Cluster แต่อย่างใด)
 ซึ่งข้อมูลที่เก็บใน ETCD ก็เป็น Object ของ Kubernetes ที่บอกว่า Node นี้มี Pod อะไรบ้าง หรือ User ต่างๆการทำ RBAC ก็จะถูกเก็บใน ETCD ด้วยเช่นกันดังนั้นตัวอย่างเราจะทำการทดลองสร้าง User ขึ้นมาใหม่และ Deployment เว็บเกมเลี้ยงไข่ไดโนเสาร์
-จากนั้นเราจะจำลองเหตุการณ์มือลั่น เผลอไปลบ Deployment เว็บไซต์นั้น และลบ User ออกจากระบบ แต่เราจะกู้ State ของ Cluster กลับมาด้วยการใช้ rke commandline
+จากนั้นเราจะจำลองเหตุการณ์มือลั่น เผลอไปลบ Deployment เว็บไซต์นั้น และลบ User ออกจากระบบ แต่เราจะกู้ State ของ Cluster กลับมาด้วยการใช้ rke command line
+[alt Orientation 2018 กับการสร้าง SIT Dino ที่ไม่ได้ให้แค่การเป็นเกมบนเว็บไซต์
+](https://alchemist.itbangmod.in.th/dfbec95337ad)
 ```
 Deployment
 container Image: linxianer12/frontend-dino
@@ -516,13 +518,73 @@ apache                  ClusterIP   None            <none>            42/TCP    
 frontend-dino-service   NodePort    10.43.247.220   192.168.122.242   3000:30835/TCP   12m    app=frontend-dino
 kubernetes              ClusterIP   10.43.0.1       <none>            443/TCP          2d6h   <none>
 ```
+เราจะทดลองเข้าไปดูที่ Application เกมเลี้ยงไข่ไดโนเสาร์ของเราที่ IP 192.168.122.242 ซึ่ง mapping เข้ากับ nodePort 30835 สำหรับรับ Traffic จากภายนอก Cluster เข้ามา
+![alt Result SIT Dino](images/cluster-explorer/app%20result.png) 
 
-### Backup ETCD State
+ซึ่งเกมเลี้ยงไข่ไดโนเสาร์ของเรานั้นก็มีประวัติคือ [alt มาทดลอง SIT Dino มาสร้างเกมบนมือถือกันเถอะ](https://alchemist.itbangmod.in.th/orientation2018-dev-game-5e5472cd4d36)
 
-ตอน Snapshot Restore ระบบจะ Down ลงไปสักพักนึงอย่างที่เราเทสกันเพราะว่ามัน restore ETCD 
+
+### เริ่มการ Backup ETCD State ก่อนเกิด Disaster
+เราจะใช้คำสั่ง rke ในการทำ snapshot ผ่านคำสั่งดั่งนี้ ซึ่งการ Backup นั้นสามารถแนบ key เพื่ออัพโหลด snapshot ขึ้นไปที่ AWS S3 Storage ก็ได้ด้วยเช่นกัน 
 ```
-rke etcd snapshot-save --name [ชื่อ] vanila-system  # ไฟล์จะถูกเก็บใน /opt/rke/etcd-snapshots เวลา restore ให้ระบุชื่อไฟล์นั้นลงไป
+rke etcd snapshot-save --name vanila-system  # ไฟล์จะถูกเก็บใน /opt/rke/etcd-snapshots เวลา restore ให้ระบุชื่อไฟล์นั้นลงไป
+
 ```
+
+เราจะมาทดลองเหตุการณ์มือลั่นกันด้วยการเผลอไปลบทุกอย่างออกจาก namespace ด้วยการใช้ kubectl delete deployment แต่ลืมชื่อ Deployment
+จะส่งผลให้ Kubernetes ทำการลบทุกๆ Deployment ใน Namespace นั้นออกไป
+```
+kubectl delete deployment --all
+
+deployment.apps "apache" deleted
+deployment.apps "frontend-dino" deleted
+deployment.apps "nginx" deleted
+```
+### Restore ETCD Database
+ระหว่างที่เรา Restore Cluster นั้นมีข้อเสียนิดหน่อยก็คือ Cluster จะเกิด Downtime ลงไปสักพักหนึ่งเพราะว่า ETCD จำเป็นต้อง Sync ให้ทุกๆอย่างใน Cluster มีข้อมูลเหมือนกันเห็นเหมือนกัน [alt ETCD KV API การันตีการ Consistency](https://etcd.io/docs/v3.3.12/learning/api_guarantees/) จึงทำให้การ Restore Clsuter จึงเกิด Downtime ลงไปด้วยเพราะ ETCD นั้นถูกหยุดไปสักพัก
+ซึ่งไฟล์ snapshot นั้นจะถูกเก็บไว้ใน host ที่มี ETCD (วึ่งหมายความว่าถ้า Host VM ล่มๆจริงๆมาแล้วเราไม่มี Backup ไปเก็บที่อื่นข้อมูลก็จะหายนะ)
+
+```
+ubuntu@kube-master:/opt/rke/etcd-snapshots$ ls -al
+total 15256
+drwxr-xr-x 2 root root     4096 Dec 27 21:06 .
+drwxr-xr-x 3 root root     4096 Dec 25 15:05 ..
+-rw------- 1 root root 13443104 Dec 27 21:06 vanila-system
+-rw------- 1 root root  2165687 Dec 27 21:01 vanila-system.zip
+ubuntu@kube-master:/opt/rke/etcd-snapshots$ pwd
+/opt/rke/etcd-snapshots
+```
+
+```
+rke etcd snapshot-restore --name vanila-system
+
+INFO[0000] Running RKE version: v1.0.14                 
+INFO[0000] Restoring etcd snapshot vanila-system        
+INFO[0000] Successfully Deployed state file at [./cluster.rkestate] 
+INFO[0000] [dialer] Setup tunnel for host [192.168.122.216] 
+INFO[0000] [dialer] Setup tunnel for host [192.168.122.27] 
+INFO[0000] [dialer] Setup tunnel for host [192.168.122.242] 
+INFO[0001] Checking if container [cert-deployer] is running on host [192.168.122.216], try #1 
+INFO[0001] Checking if container [cert-deployer] is running on host [192.168.122.27], try #1 
+INFO[0001] Image [rancher/rke-tools:v0.1.66] exists on host [192.168.122.27] 
+INFO[0001] Image [rancher/rke-tools:v0.1.66] exists on host [192.168.122.216] 
+INFO[0001] Starting container [cert-deployer] on host [192.168.122.216], try #1 
+INFO[0001] Starting container [cert-deployer] on host [192.168.122.27], try #1 
+INFO[0001] Checking if container [cert-deployer] is running on host [192.168.122.216], try #1 
+INFO[0001] Checking if container [cert-deployer] is running on host [192.168.122.27], try #1 
+INFO[0006] Checking if container [cert-deployer] is running on host [192.168.122.216], try #1 
+INFO[0006] Removing container [cert-deployer] on host [192.168.122.216], try #1 
+INFO[0006] Checking if container [cert-deployer] is running on host [192.168.122.27], try #1 
+INFO[0006] Removing container [cert-deployer] on host [192.168.122.27], try #1 
+INFO[0007] Stopping container [etcd] on host [192.168.122.216] with stopTimeoutDuration [5s], try #1 
+INFO[0007] [etcd] starting backup server on host [192.168.122.216] 
+INFO[0007] Image [rancher/rke-tools:v0.1.66] exists on host [192.168.122.216] 
+INFO[0007] Starting container [etcd-Serve-backup] on host [192.168.122.216], try #1 
+INFO[0007] [etcd] Successfully started [etcd-Serve-backup] container on host [192.168.122.216] 
+```
+
+
+
 Highlight อยู่ที่ Control Plane
 ถ้าเป็น Hosted Provider ที่ Rancher ไม่ไได้คุม Control Plane ก็จะไม่สามารถทำเรื่องของการ Backup ได้เพราะว่าไมีสามารถ Access Control Plane แต่ทำแบบ Life Cycle Delete ให้อะไรได้แบบนี้ (เพราะมี API KEY Cloud )
 ถ้าเป็น Import ก็คือไม่สามารถทได้ทั้ง Life Cycle และการ Backup แต่ทำได้แค่เรื่องของการ Deploy อย่างเดียวนั่นเอง เพราะว่าไม่มี Key Cloud และก็คุม Control Plane ไมไ่ด้ด้วย
