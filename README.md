@@ -1151,6 +1151,24 @@ local:p-vwr2n   System    active    System project created for the cluster
 จะพบว่า Kube-scheduler จะหยุดการสร้าง Pod เพิ่มถ้าหากผิดเงื่อนไขของ Resource Quota ที่ Project ตั้งเอาไว้ (กลับมาทดลองด้วย user admin นะ)
 ![Pod Exceed with be reject](images/resource-quota/proof-authorize/7.limit-pod.png)
 
+##### Demo KubeOps Skill Deploy Todoapp 
+สร้าง Database จาก Catalog ผ่าน Rancher โดยใช้ mariadb และตั้งค่า username password ตามที่ใช้งาน
+```
+kubectl create cm backend-config --from-literal="DATABASE_URL=mariadb"   --from-literal="DATABASE_USERNAME=linxianer12" --from-literal="DATABASE_PASSWORD=cyberpunk2077"
+
+kubectl  create deployment --image quay.io/linxianer12/quarkus-todoapp-backend:1.0.0 quarkus-todoapp-backend
+
+kubectl set env deployment quarkus-todoapp-backend --from=cm/backend-config
+
+kubectl expose deployment   quarkus-todoapp-backend  --type=NodePort --port=7070 --target-port=7070 --external-ip=192.168.122.215
+
+kubectl create deployment  --image quay.io/linxianer12/vue-todoapp-frontend:1.0.0  vue-todoapp-frontend
+
+kubectl expose deployment vue-todoapp-frontend    --type=NodePort --port=80 --target-port=80 --external-ip=192.168.122.215
+
+```
+
+
 # ปิดท้าย
 สำหรับ Guide Line การใช้งาน Rancher และ Kubernetes ก็จบลงเท่านี้ถ้าหากเพื่อนๆคนไหนที่กำลังจะไปสอบ Certified Kubernetes Administrator มีข้อสงสัยก็สามารถมาสอบถามกันได้นะ 
 แนะนำให้ลองทำ Kubernetes Hardway สักสองสามครั้งหรือจนกว่าจะเข้าส่วนประกอบใน Kuberntes เรื่อง Command นั้นอาจจะต้องจำบ้างก็จริงแต่ที่สำคัญคือการเขาใจ ทฤษฎีใน Kubernetes ซึ่งจะสามารถไปประยกต์ใช้กับการออกแบบโปรแกรมที่เราเขียนได้ด้วย 
