@@ -1161,14 +1161,18 @@ local:p-vwr2n   System    active    System project created for the cluster
 ![Todoapp](images/todoapp/2.app-value.png)
 Backend จะดึงข้อมูลจาก MariaDB
 ![Todoapp](images/todoapp/3.app-backend.png)
+Backend จะดึงข้อมูลจาก MariaDB
+![Todoapp](images/todoapp/4.database.png)
+ใส่ข้อมูล username/ namespace ให้ถูกต้องดั่งภาพ (สามารถปรับแต่งได้แต่ก็อย่าลืมปรับ env ที่สร้างจาก configmap/secret ด้วยนะคับผม ปล.จริงๆแล้ว password ที่เซ้ทเป็น secret ก็เก็บอยู่ใน base64 ไม่ได้ปลอดภัยแต่อย่างใด )
+![Todoapp](images/todoapp/4.database.png)
 
 ```
 # สร้าง configmap ชี้ไปยัง database todoapp
-kubectl create cm backend-config --from-literal="DATABASE_URL=mariadb"   --from-literal="DATABASE_USERNAME=linxianer12" --from-literal="DATABASE_PASSWORD=cyberpunk2077"
+kubectl create secret generic backend-secret --from-literal="DATABASE_URL=mariadb"   --from-literal="DATABASE_USERNAME=linxianer12" --from-literal="DATABASE_PASSWORD=cyberpunk2077"
 
-kubectl  create deployment --image quay.io/linxianer12/quarkus-todoapp-backend:1.0.0 quarkus-todoapp-backend
+kubectl create deployment --image quay.io/linxianer12/quarkus-todoapp-backend:1.0.0 quarkus-todoapp-backend
 
-kubectl set env deployment quarkus-todoapp-backend --from=cm/backend-config
+kubectl set env deployment quarkus-todoapp-backend --from=secret/backend-secret 
 
 kubectl expose deployment   quarkus-todoapp-backend  --type=NodePort --port=7070 --target-port=7070 --external-ip=192.168.122.215
 
@@ -1177,6 +1181,102 @@ kubectl create deployment  --image quay.io/linxianer12/vue-todoapp-frontend:1.0.
 kubectl expose deployment vue-todoapp-frontend    --type=NodePort --port=80 --target-port=80 --external-ip=192.168.122.215
 
 ```
+###### ผลลัพธ์การทดสอบ
+Backend Quarkus
+```
+[linxianer12@localhost Certified-Rancher-Operator-Thai]$ oc logs -f quarkus-todoapp-backend-5894bf7c46-rmmh7 
+exec java -Dquarkus.http.host=0.0.0.0 -Djava.util.logging.manager=org.jboss.logmanager.LogManager -XX:+ExitOnOutOfMemoryError -cp . -jar /deployments/quarkus-run.jar
+__  ____  __  _____   ___  __ ____  ______ 
+ --/ __ \/ / / / _ | / _ \/ //_/ / / / __/ 
+ -/ /_/ / /_/ / __ |/ , _/ ,< / /_/ /\ \   
+--\___\_\____/_/ |_/_/|_/_/|_|\____/___/   
+2021-01-23 16:16:34,214 INFO  [io.quarkus] (main) todoapp-backend 1.0.0-SNAPSHOT on JVM (powered by Quarkus 1.11.0.Final) started in 2.398s. Listening on: http://0.0.0.0:7070
+2021-01-23 16:16:34,216 INFO  [io.quarkus] (main) Profile prod activated. 
+2021-01-23 16:16:34,217 INFO  [io.quarkus] (main) Installed features: [agroal, cdi, hibernate-orm, hibernate-orm-panache, jdbc-mariadb, mutiny, narayana-jta, resteasy, resteasy-jackson, smallrye-context-propagation, spring-data-jpa, spring-di]
+
+
+[linxianer12@localhost Certified-Rancher-Operator-Thai]$ oc exec -it quarkus-todoapp-backend-5894bf7c46-rmmh7   bash
+kubectl exec [POD] [COMMAND] is DEPRECATED and will be removed in a future version. Use kubectl exec [POD] -- [COMMAND] instead.
+bash-4.4$ env | grep DATABASE
+DATABASE_URL=mariadb
+DATABASE_USERNAME=linxianer12
+DATABASE_PASSWORD=cyberpunk2077
+bash-4.4$ curl localhost:7070
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>todoapp-backend - 1.0.0-SNAPSHOT</title>
+    <style>
+        h1, h2, h3, h4, h5, h6 {
+            margin-bottom: 0.5rem;
+            font-weight: 400;
+            line-height: 1.5;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+        }
+```
+
+Database MariaDB
+```
+mariadb@mariadb-0:/$ mysql -u linxianer12 -p
+Enter password: 
+Welcome to the MariaDB monitor.  Commands end with ; or \g.
+Your MariaDB connection id is 454
+Server version: 10.3.22-MariaDB Source distribution
+
+Copyright (c) 2000, 2018, Oracle, MariaDB Corporation Ab and others.
+
+Type 'help;' or '\h' for help. Type '\c' to clear the current input statement.
+
+MariaDB [(none)]> show databases;
++--------------------+
+| Database           |
++--------------------+
+| information_schema |
+| test               |
+| todoapp            |
++--------------------+
+3 rows in set (0.000 sec)
+
+MariaDB [(none)]> use todoapp;
+Reading table information for completion of table and column names
+You can turn off this feature to get a quicker startup with -A
+
+Database changed
+MariaDB [todoapp]> show tables;
++--------------------+
+| Tables_in_todoapp  |
++--------------------+
+| Todo               |
+| hibernate_sequence |
++--------------------+
+2 rows in set (0.002 sec)
+
+MariaDB [todoapp]> select * from Todo;
++----+-------------------------------------------------------------------------------------------------------------+-------------+
+| id | todoDetail                                                                                                  | todoType    |
++----+-------------------------------------------------------------------------------------------------------------+-------------+
+|  1 | Hello Quarkus                                                                                               | review      |
+|  2 | Checking spelling or copy template because free typing can cuase bugged.
+Sorry for have problem in demo TwT | improvement |
++----+-------------------------------------------------------------------------------------------------------------+-------------+
+2 rows in set (0.002 sec)
+
+```
+ผลลัพธ์ของ service
+```
+[linxianer12@localhost Certified-Rancher-Operator-Thai]$ oc get svc
+NAME                      TYPE        CLUSTER-IP      EXTERNAL-IP       PORT(S)          AGE
+kubernetes                ClusterIP   10.43.0.1       <none>            443/TCP          10h
+mariadb                   ClusterIP   10.43.105.151   <none>            3306/TCP         7h43m
+quarkus-todoapp-backend   NodePort    10.43.212.83    192.168.122.215   7070:30021/TCP   5h9m
+vue-todoapp-frontend      NodePort    10.43.4.60      192.168.122.215   80:32050/TCP     4h6m
+
+```
+
 
 
 # ปิดท้าย
