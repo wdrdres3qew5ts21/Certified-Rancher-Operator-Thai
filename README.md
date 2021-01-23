@@ -1152,8 +1152,18 @@ local:p-vwr2n   System    active    System project created for the cluster
 ![Pod Exceed with be reject](images/resource-quota/proof-authorize/7.limit-pod.png)
 
 ##### Demo KubeOps Skill Deploy Todoapp 
-สร้าง Database จาก Catalog ผ่าน Rancher โดยใช้ mariadb และตั้งค่า username password ตามที่ใช้งาน
+สร้าง Database จาก Catalog ผ่าน Rancher โดยใช้ mariadb และตั้งค่า username password ตามที่ใช้งาน โดยเราจะใช้ Quarkus ต่อกับ MariaDB เป็นตัวอย่างและมี Frontend เป็น Vue.js
+ซึ่ง Service ต้องไป Select Pod จาก label ที่ตรงกันโดย Frontend นั้นจะเป้น Static Website ซึ่ง fix ค่าชี้ไปหา Backend API quarkus-todoapp-backend:7070 เสมอ จึงไม่สามารถ Config ได้ (เพราะ build static asset มาแล้วและไม่ได้ทำ reverse proxy ที่ nginx เป็น frontend แบบ fix ค่ามาเลย)
+แต่ Backend สามารถ config parameter  Runtime ได้ตามดั่ง Command กับใน source code application.properties
+
+![Todoapp](images/todoapp/1.app-non.png)
+ถ้ามีข้อมูลจะแสดง List todo แทน (ถ้าสร้าง todo แล้วต้อง refresh หน้าเพราะว่าไม่ได้ implement fetch ใหม่หลังจากที่ insert ข้อมูลลง DB)
+![Todoapp](images/todoapp/2.app-value.png)
+Backend จะดึงข้อมูลจาก MariaDB
+![Todoapp](images/todoapp/3.app-backend.png)
+
 ```
+# สร้าง configmap ชี้ไปยัง database todoapp
 kubectl create cm backend-config --from-literal="DATABASE_URL=mariadb"   --from-literal="DATABASE_USERNAME=linxianer12" --from-literal="DATABASE_PASSWORD=cyberpunk2077"
 
 kubectl  create deployment --image quay.io/linxianer12/quarkus-todoapp-backend:1.0.0 quarkus-todoapp-backend
