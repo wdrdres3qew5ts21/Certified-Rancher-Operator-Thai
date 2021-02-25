@@ -1166,6 +1166,13 @@ Backend จะดึงข้อมูลจาก MariaDB
 ใส่ข้อมูล username/ namespace ให้ถูกต้องดั่งภาพ (สามารถปรับแต่งได้แต่ก็อย่าลืมปรับ env ที่สร้างจาก configmap/secret ด้วยนะคับผม ปล.จริงๆแล้ว password ที่เซ้ทเป็น secret ก็เก็บอยู่ใน base64 ไม่ได้ปลอดภัยแต่อย่างใด )
 ![Todoapp](images/todoapp/4.database.png)
 
+##### **สำหรับ Openshift จะใช้ Image
+ซึ่งเป็น Image ที่ผ่านการทำ Security ไว้แล้วไม่ให้ Process Container ทำงานด้วย Root ดังนั้นจะต้องอนุญาต Privileges สำหรับ Process Nginx ให้อยู่ใน Group Root เพื่อที่ User ใน Group Root จะ Execute ไฟล์รัน Process ได้เฉพาะที่กำหนดนั่นเอง
+```
+quay.io/linxianer12/vue-todoapp-frontend:1.1.0   # Openshift Image พร้อมกับจำกัด Privileges Nginx
+quay.io/linxianer12/vue-todoapp-frontend:1.1.0   # Container Image ปกติสำหรับ Kubernetes ที่รัน Container ด้วย Root 
+```
+
 ```
 # สร้าง configmap ชี้ไปยัง database todoapp
 kubectl create secret generic backend-secret --from-literal="DATABASE_URL=mariadb"   --from-literal="DATABASE_USERNAME=linxianer12" --from-literal="DATABASE_PASSWORD=cyberpunk2077"
