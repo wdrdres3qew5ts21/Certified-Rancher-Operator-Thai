@@ -21,6 +21,9 @@
 # docker run -i --rm -p 8080:8080 -p 5005:5005 -e JAVA_ENABLE_DEBUG="true" quarkus/todoapp-backend-fast-jar
 #
 ###
+
+#  docker run     -e MYSQL_ROOT_PASSWORD=cyberpunk2077  -e MYSQL_PASSWORD=cyberpunk2077   -e MYSQL_USER=linxianer12   -d   -p 3306:3006  docker.io/mariadb:10.5
+
 FROM registry.access.redhat.com/ubi8/ubi-minimal:8.3 
 
 ARG JAVA_PACKAGE=java-11-openjdk-headless

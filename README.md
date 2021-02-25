@@ -1153,7 +1153,7 @@ local:p-vwr2n   System    active    System project created for the cluster
 
 ### Demo KubeOps Skill Deploy Todoapp 
 สร้าง Database จาก Catalog ผ่าน Rancher โดยใช้ mariadb และตั้งค่า username password ตามที่ใช้งาน โดยเราจะใช้ Quarkus ต่อกับ MariaDB เป็นตัวอย่างและมี Frontend เป็น Vue.js
-ซึ่ง Service ต้องไป Select Pod จาก label ที่ตรงกันโดย Frontend นั้นจะเป้น Static Website ซึ่ง fix ค่าชี้ไปหา Backend API quarkus-todoapp-backend:7070 เสมอ จึงไม่สามารถ Config ได้ (เพราะ build static asset มาแล้วและไม่ได้ทำ reverse proxy ที่ nginx เป็น frontend แบบ fix ค่ามาเลย)
+ซึ่ง Service ต้องไป Select Pod จาก label ที่ตรงกันโดย Frontend นั้นจะเป้น Static Website ซึ่ง fix ค่าชี้ไปหา Backend API quarkus-todoapp-backend:13300 เสมอ จึงไม่สามารถ Config ได้ (เพราะ build static asset มาแล้วและไม่ได้ทำ reverse proxy ที่ nginx เป็น frontend แบบ fix ค่ามาเลย)
 แต่ Backend สามารถ config parameter  Runtime ได้ตามดั่ง Command กับใน source code application.properties
 
 ![Todoapp](images/todoapp/1.app-non.png)
