@@ -1,5 +1,7 @@
 from docker.io/nginx
 EXPOSE 80
+ENV TEST=2077
+
 RUN chgrp 0 -R  /etc/nginx/ && \
     chgrp 0 -R /var/cache/nginx/ && \
     chgrp 0 -R /usr/share/nginx/ && \
@@ -9,7 +11,7 @@ RUN chgrp 0 -R  /etc/nginx/ && \
     chmod 770 -R /usr/share/nginx/ && \
     chmod 770 -R /var/run/
 
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+COPY nginx-80.conf /etc/nginx/conf.d/default.conf
 copy dist/ /usr/share/nginx/html/
 
 
