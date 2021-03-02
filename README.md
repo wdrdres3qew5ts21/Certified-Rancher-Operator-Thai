@@ -1170,7 +1170,7 @@ Backend จะดึงข้อมูลจาก MariaDB
 ซึ่งเป็น Image ที่ผ่านการทำ Security ไว้แล้วไม่ให้ Process Container ทำงานด้วย Root ดังนั้นจะต้องอนุญาต Privileges สำหรับ Process Nginx ให้อยู่ใน Group Root เพื่อที่ User ใน Group Root จะ Execute ไฟล์รัน Process ได้เฉพาะที่กำหนดนั่นเอง
 ```
 quay.io/linxianer12/vue-todoapp-frontend:1.1.0   # Openshift Image พร้อมกับจำกัด Privileges Nginx
-quay.io/linxianer12/vue-todoapp-frontend:1.1.0   # Container Image ปกติสำหรับ Kubernetes ที่รัน Container ด้วย Root 
+quay.io/linxianer12/vue-todoapp-frontend:1.0.0   # Container Image ปกติสำหรับ Kubernetes ที่รัน Container ด้วย Root 
 ```
 
 ```
